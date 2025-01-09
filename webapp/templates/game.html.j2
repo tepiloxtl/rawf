@@ -1,0 +1,65 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+    <div class="gamepage">
+        <p>
+            <div class="ra-btn"><a href="https://retroachievements.org/game/{{ game.ID }}"><img src="/static/img/ra-icon.webp" width=64></a></div>
+            <div style="display: inline-block; ">
+                <img src="/static/img{{game.ImageIcon}}">
+            </div>
+            <div style="vertical-align: middle; display: inline-block;">
+                <a href="/console/{{ game.ConsoleID }}">{{ game.ConsoleName}}</a><br>
+                <h1>{{ game.Titleb }}</h1>
+            </div>
+        </p>
+        <p>
+            <div style="display: inline-block; ">
+                <img src="/static/img{{game.ImageBoxArt}}">
+            </div>
+            <div style="vertical-align: top; display: inline-block;">
+                Publisher: {{ game.Publisher }}<br>
+                Developer: {{ game.Developer }}<br>
+                Genre: {{ game.Genre }}<br>
+                Released: {{ game.Released }}<br>
+                Achievements: {{ game.NumAchievements }}<br>
+            </div>
+        </p>
+        <img src="/static/img{{game.ImageTitle}}" class="img-fluid">
+        <img src="/static/img{{game.ImageIngame}}" class="img-fluid"><br>
+        {{ username }}<br>
+        {% if user %}
+        <h2><img src="/static/img{{ user.UserPic }}" width=64>{{ user.User }} progress</h2>
+        {% else %}
+        <h2>Achievements</h2>
+        {% endif %}
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Achievement</th>
+                    <th>Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if user %}
+                {% for achv in gameachievements %}
+                <tr>
+                    <td><div style="display: inline-block; vertical-align: top;"><img src="/static/img/Badge/{{ achv.BadgeName }}{% if achv.Achieved %}{% else %}_lock{% endif %}.png" width="64"></div><div style="display: inline-block; width: calc(100% - 70px)">{{ achv.Title }}<br>{{ achv.Description }}{% if achv.AchievedDate %}<br>Achieved at {{ achv.AchievedDate }}{% endif %}</div></td>
+                    <td>
+                        {{ achv.Points }}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                {% for achv in gameachievements %}
+                <tr>
+                    <td><div style="display: inline-block; vertical-align: top;"><img src="/static/img/Badge/{{ achv.BadgeName }}.png" width="64"></div><div style="display: inline-block; width: calc(100% - 70px)">{{ achv.Title }}<br>{{ achv.Description }}</div></td>
+                    <td>
+                        {{ achv.Points }}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

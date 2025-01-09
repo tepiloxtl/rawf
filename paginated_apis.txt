@@ -1,0 +1,60 @@
+GetUserCompletionProgress:
+  "Count": 100,
+  "Total": 1287,
+  "Results":
+  c, o
+GetUserWantToPlayList:
+  "Count": 100,
+  "Total": 1287,
+  "Results":
+  c, o 
+GetUserRecentlyPlayedGames:
+  ???
+  c, o
+GetUsersIFollow:
+  "Count": 20,
+  "Total": 120,
+  "Results": 
+  c, o
+GetUsersFollowingMe:
+  "Count": 20,
+  "Total": 120,
+  "Results": 
+  c, o
+GetGameLeaderboards:
+  "Count": 29,
+  "Total": 29,
+  "Results": 
+  c, o
+GetLeaderboardEntries:
+  "Count": 100,
+  "Total": 1287,
+  "Results": 
+  c, o
+GetUserGameLeaderboards:
+  "Count": 10,
+  "Total": 64,
+  "Results": 
+  c, o
+GetGameList:
+  ???
+  c, o
+GetAchievementUnlocks:
+  ???
+  c, o
+GetComments:
+  "Count": 4,
+  "Total": 4,
+  "Results":
+  c, o
+GetRecentGameAwards:
+  "Count": 25,
+  "Total": 172318,
+  "Results": 
+  c, o
+GetTicketData:
+  ???
+  c, o
+GetTicketData:
+  ???
+  c, o

@@ -1,0 +1,34 @@
+# Sekcja 1: Tytuł, jakiś tekst cośtam
+
+# Sekcja 2: 2 podsekcje horyzontalnie
+ [x] Lista graczy w grupie, podstawowe staty
+ [x] Feed najnowszych zdobytych achievementów
+
+# Sekcja 3: x podsekcji, małe modale
+ - Lista ostatnich wycalakowanych tytułów
+ [x] Graph zdobywanych punktów w sumie
+ - Graph zdobywanych punktów z podziałem na graczy
+ [?] Najpopularniejsze gry 
+ [?] Najwięcej zdobytych punktów na przestrzeni x czasu
+ [?] Ranking graczy kompletacji biblioteki
+ - Set requests
+ - Najtrudniejsze achievementy
+ - Your ~~ad~~ idea here
+
+# Osobne podstrony/moduły
+## Strona gry
+ - Jak na RA, ale tylko ze statystykami graczy w grupie
+ - Side by side comparison achievementów zdobytych przez wybranych graczy
+
+## Profil gracza
+ [x] ?? Też coś jak na RA?
+ - Możnaby tu coś dać jak wypada gracz na tle całej grupy
+ - Set requests
+
+### Podstrona gracz -> gra
+ [x] Szczegóły postępu danego gracza nad daną grą
+
+# Tech
+ - Python, Flask
+ - Frontend RA jest zrobiony w jQuery-UI
+ - ... ale personalnie chce wypróbować Bootstrapa

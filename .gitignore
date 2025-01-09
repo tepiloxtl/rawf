@@ -1,0 +1,7 @@
+.env
+.venv
+webapp/static/img/Badge
+webapp/static/img/Images
+webapp/static/img/UserPic
+__pycache__
+RA.db

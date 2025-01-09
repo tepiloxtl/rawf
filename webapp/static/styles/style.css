@@ -1,0 +1,129 @@
+/* Colors used:
+white: #f8f9fa
+bg old: #2c2c2c
+bg new: #2C97FA
+blue: #232323
+gold: #ffd700 */
+
+body {
+    /* --bs-body-color: #f8f9fa; */
+    --bs-body-color: #2C97FA;
+    /* --bs-body-bg: #2c2c2c; */
+    --bs-body-bg: #232323;
+}
+
+a {
+    color: #ffd700;
+}
+
+.homepage {
+    width: 98%;
+    margin: auto;
+}
+
+.table {
+    --bs-table-color-state:var(--bs-body-color);
+}
+
+.table-striped {
+    --bs-table-striped-bg: rgba(var(--bs-emphasis-color-rgb), 0.2);
+}
+
+/* .table-bordered {
+    border-top-right-radius: var(--bs-border-radius);
+    border-top-left-radius: var(--bs-border-radius);
+} */
+
+/* .grid-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.grid-item {
+    flex: 1 1 calc(33.333% - 1rem);
+    min-width: 200px;
+    max-height: 350px;
+} */
+
+@media (orientation: portrait) {
+    .grid-item {
+        flex: 1 1 100%;
+        min-width: 0;
+        max-height: 350px;
+    }
+}
+
+.scrollable-list {
+    max-height: 300px; /* Adjust height as needed */
+    overflow-y: auto;
+}
+
+.scrollable-table {
+    width: 100%;
+    display: block;
+    overflow-y: auto;
+}
+
+.table-300 {
+    height: 300px; 
+}
+
+.table-260 {
+    height: 260px; 
+}
+
+.main-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.main-section .side-by-side {
+    flex: 1 1 calc(50% - 1rem);
+    min-width: 300px;
+}
+
+.table-hover {
+    --bs-table-hover-color: #ffd700;
+}
+
+.list-group-item:hover {
+    background-color: rgba(var(--bs-emphasis-color-rgb), 0.075);
+    color: #ffd700; /* Golden accent */
+}
+
+.sticky-top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background-color: #1f1f1f;
+    padding: 0.5rem 1rem;
+    color: #ffd700; /* Golden accent */
+}
+
+.achievement img {
+    width: 64px;
+}
+
+.userpage {
+    width: 80%;
+    margin: auto;
+    position: relative;
+}
+
+.gamepage {
+    width: 80%;
+    margin: auto;
+    position: relative;
+}
+
+footer {
+    text-align: center;
+}
+
+.ra-btn {
+    position: absolute; /* Position relative to the .gamepage container */
+    top: 10px; /* Distance from the top of the .gamepage container */
+    right: 10px; /* Distance from the right edge of the .gamepage container */
+}

@@ -1,0 +1,47 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+    <div class="userpage">
+        <div class="ra-btn"><a href="https://retroachievements.org/user/{{ user.User }}"><img src="/static/img/ra-icon.webp" width=64></a></div>
+        <div>
+            <div style="vertical-align: top; display: inline-block; ">
+                <img src="/static/img{{ user.UserPic }}">
+            </div>
+            <div style="display: inline-block;">
+                <h1>{{ user.User }}</h1>
+                {{ user.Motto }}<br>
+                Last played: <br>
+                {{ user.gTitle }}: {{ user.RichPresenceMsg }}<br>
+                Points: {{ user.TotalTruePoints }}<br>
+                Softcore Points: {{ user.TotalSoftcorePoints }}<br>
+                Hardcore Points: {{ user.TotalPoints }}<br>
+                Achievements: {{ user.Achievements }}<br>
+            </div>
+        </div>
+        <div>
+            <h1>Games: {{ user.GamesMastered }} / {{ user.Games }}</h1>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Progress</th>
+                        <th>Achievements</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in usergames %}
+                    <tr>
+                        <td><div style="display: inline-block;"><img src="/static/img{{ game.ImageIcon }}" width="64"></div><div style="display: inline-block;"><a href="/game/{{ game.ID }}?u={{user.User}}">{{ game.Title }}</a><br><a href="/console/{{ game.ConsoleID }}">{{ game.ConsoleName }}</a></div></td>
+                        <td>
+                            <div class="progress" role="progressbar" aria-label="Progress" aria-valuenow="{{ game.NumHardcoreUnlocksp }}" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar bg-warning text-dark" style="width: {{ game.NumHardcoreUnlocksp }}%">{{ game.NumHardcoreUnlocksp }}%</div>
+                            </div>
+                          </td>
+                        <td>{{ game.NumAchievements }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
