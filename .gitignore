@@ -5,3 +5,4 @@ webapp/static/img/Images
 webapp/static/img/UserPic
 __pycache__
 RA.db
+users.txt
