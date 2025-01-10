@@ -305,6 +305,10 @@ def update():
                 update_user(user.strip())
     conn.commit()
 
+for path in [os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'Badge'), os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'Images'), os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'UserPic')]:
+    if os.path.exists(path) == False:
+        os.makedirs(path)
+
 update()
 schedule.every(10).minutes.do(update)
 while True:
