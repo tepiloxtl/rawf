@@ -1,5 +1,7 @@
 # RAWF - RetroAchievements with Friends
-Please, forgive me for code crimes that might be commited in these files lol
+Simple webpage panel that tracks RetroAchievement progress for a group of players, in a small Python/Flask application
+
+[Demo site](https://rawf.tepiloxtl.net)
 ## Installing and running (hopefully)
 1. Clone the repo
 2. Add your RA API key as `RA_APIKEY` either to your environment variables or into `.env` file
@@ -8,7 +10,7 @@ Please, forgive me for code crimes that might be commited in these files lol
 5. `python3 -m pip install requirements.txt`
 6. (run once or when redoing the database) `python3 make_db.py`
 To run the backend (retrieving data from API) run `python3 gather_data.py`
-To run the frontend, run `flask run`. This will run werkzeug server at `127.0.0.1:5000`. Proxy it accordingly using a web server of your choice. It has ProxyFix already applied
+To run the frontend, run `flask run`. This will run werkzeug server at `127.0.0.1:5000`. Proxy it accordingly using a web server of your choice. It has ProxyFix already applied   
 TODO: Reconfigure to run with gunicorn or uWSGI
 
 ## Stuff
