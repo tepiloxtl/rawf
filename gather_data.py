@@ -70,7 +70,7 @@ def add_new_user(username):
     # ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, 
     # ContribYield INTEGER, TotalPoints INTEGER, TotalSoftcorePoints INTEGER, TotalTruePoints INTEGER, Games INTEGER, GamesMastered INTEGER, Achievements INTEGER,
     # Permissions INTEGER, Untracked INTEGER, UserWallActive INTEGER, Motto TEXT
-    c.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+    c.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
                 [int(RAUserProfile["ID"]),
                 str(RAUserProfile["User"]),
                 str(RAUserProfile["UserPic"]), 
@@ -88,7 +88,8 @@ def add_new_user(username):
                 int(RAUserProfile["Permissions"]), 
                 int(RAUserProfile["Untracked"]), 
                 int(RAUserProfile["UserWallActive"]), 
-                str(RAUserProfile["Motto"])])
+                str(RAUserProfile["Motto"]),
+                int(time.time())])
     get_user_wants_to_play(username)
     get_user_set_requests(username)
     conn.commit()
@@ -146,7 +147,9 @@ def update_user(username):
     print("Fetching updates for " + str(username))
     updategames = {}
     c = conn.cursor()
-    userid = [aa for aa in c.execute("SELECT ID from users WHERE User = '" + str(username) + "'").fetchone()][0]
+    user = c.execute("SELECT ID, LastUpdate from users WHERE User = '" + str(username) + "'").fetchone()
+    userid = user[0]
+    userlastupdate = user[1]
     userlastha = [aa for aa in c.execute("SELECT DateEarnedHardcore from userachievements WHERE UserID = '" + str(userid) + "' ORDER BY DateEarnedHardcore DESC LIMIT 1").fetchone()]
     userlastsa = [aa for aa in c.execute("SELECT DateEarned from userachievements WHERE UserID = '" + str(userid) + "' ORDER BY DateEarned DESC LIMIT 1").fetchone()]
     userlasta = max(userlastha[0], userlastsa[0])
@@ -178,7 +181,7 @@ def update_user(username):
                            int(item["AchievementID"]),
                            int(date),
                            int(date)])
-    if updategames:
+    if updategames or int(time.time()) - userlastupdate > 24 * 60 * 60:
         print("Updating profile for " + str(username))
         games = [aa[0] for aa in c.execute("SELECT ID FROM games;").fetchall()]
         usergames = [aa for aa in c.execute("SELECT GameID, HighestAwardKind FROM usergames WHERE UserID = ?;", [int(userid)]).fetchall()]
@@ -186,7 +189,6 @@ def update_user(username):
             if game not in games:
                 add_new_game(int(game))
             RAProgress = RARequest("GetGameInfoAndUserProgress", u = str(username), g = str(game), a = "1")
-            print(any(game == lst[0] for lst in usergames))
             if any(lst[0] == game for lst in usergames) == False:
                 c.execute("INSERT INTO usergames VALUES (?, ?, ?, ?, ?, ?, ?);",
                    [int(userid), 
@@ -212,12 +214,11 @@ def update_user(username):
         for game in usergames:
             if "mastered" in str(game[1]):
                 mastered_games += 1
-        print(mastered_games)
         RAUserProfile = RARequest("GetUserProfile", u = str(username))
         # ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, 
         # ContribYield INTEGER, TotalPoints INTEGER, TotalSoftcorePoints INTEGER, TotalTruePoints INTEGER, Games INTEGER, GamesMastered INTEGER, Achievements INTEGER,
         # Permissions INTEGER, Untracked INTEGER, UserWallActive INTEGER, Motto TEXT
-        c.execute("UPDATE users SET RichPresenceMsg = ?, LastGameID = ?, ContribCount = ?, ContribYield = ?, TotalPoints = ?, TotalSoftcorePoints = ?, TotalTruePoints = ?, Games = ?, GamesMastered = ?, Achievements = ?, Motto = ? WHERE ID = ?;",
+        c.execute("UPDATE users SET RichPresenceMsg = ?, LastGameID = ?, ContribCount = ?, ContribYield = ?, TotalPoints = ?, TotalSoftcorePoints = ?, TotalTruePoints = ?, Games = ?, GamesMastered = ?, Achievements = ?, Motto = ?, LastUpdate = ? WHERE ID = ?;",
                   [str(RAUserProfile["RichPresenceMsg"]),
                    int(RAUserProfile["LastGameID"]),
                    int(RAUserProfile["ContribCount"]),
@@ -229,7 +230,8 @@ def update_user(username):
                    int(mastered_games),
                    int(achievement_count),
                    str(RAUserProfile["Motto"]),
-                   int(userid)])
+                   int(time.time()),
+                   int(userid),])
         get_user_wants_to_play(username)
         get_user_set_requests(username)
     conn.commit()
