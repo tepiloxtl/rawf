@@ -68,22 +68,22 @@
         <div class="row row-cols-1 row-cols-md-3">
             <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Groups Wants to Play list</b></div><div><a onclick="window.open('widget/wtpg', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue;"></i></a></div></div>
                 <div>
-                    {{ widgets.widget_list_gamebyuser(wtpg) }}
+                    {{ widgets.widget_list_gamebyuser(wtpg, cstyles.widget_table) }}
                 </div>
             </div>
             <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Weekly points graph</b></div><div><a onclick="window.open('widget/weeklypoints', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue;"></i></a></div></div>
                 <div>
-                    {{ widgets.widget_pointsgraph(pointsgraph) }}
+                    {{ widgets.widget_pointsgraph(pointsgraph, cstyles.widget_graph) }}
                 </div>
             </div>
             <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Mastered games</b></div><div><a onclick="window.open('widget/mastered', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue;"></i></a></div></div>
                 <div>
-                    {{ widgets.widget_list_gamebyuser(mastered) }}
+                    {{ widgets.widget_list_gamebyuser(mastered, cstyles.widget_table) }}
                 </div>
             </div>
             <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Set requests</b></div><div><a onclick="window.open('widget/srq', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue;"></i></a></div></div>
                 <div>
-                    {{ widgets.widget_list_gamebyuser(srq) }}
+                    {{ widgets.widget_list_gamebyuser(srq, cstyles.widget_table) }}
                 </div>
             </div>
             <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Element 1</b></div><div><a onclick="window.open('widget/wtpg', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue;"></i></a></div></div>

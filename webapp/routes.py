@@ -153,7 +153,9 @@ FROM
     pg = pointsgraph()
     mastered = get_mastered_games()
     srq = get_set_requests()
-    return render_template('index.html.j2', Title='Home', users=sqlusers, achievements=achievements, wtpg=wtpg, pointsgraph=pg, mastered=mastered, srq=srq)
+    cstyles = {"widget_table": {"class": "scrollable-table table-260 border rounded"},
+               "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:260px; width:100%;"}}
+    return render_template('index.html.j2', Title='Home', users=sqlusers, achievements=achievements, wtpg=wtpg, pointsgraph=pg, mastered=mastered, srq=srq, cstyles=cstyles)
 
 @app.route('/user/<username>')
 def userpage(username):
@@ -202,20 +204,22 @@ def gamepage(gameid):
 
 @app.route('/widget/<widget>')
 def popupwidget(widget):
+    cstyles = {"widget_table": {"class": "scrollable-table border rounded"},
+               "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:100%; width:100%;"}}
     match widget:
         case "wtpg":
             data = get_want_to_play_games()
-            swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data) }}"
+            swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data, cstyles.widget_table) }}"
         case "weeklypoints":
             data = pointsgraph()
-            swidget = "{% import 'widgets.html.j2' as widgets %}<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>{{ widgets.widget_pointsgraph(data) }}"
+            swidget = "{% import 'widgets.html.j2' as widgets %}<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>{{ widgets.widget_pointsgraph(data, cstyles.widget_graph) }}"
         case "mastered":
             data = get_mastered_games()
-            swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data) }}"
+            swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data, cstyles.widget_table) }}"
         case "srq":
             data = get_set_requests()
-            swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data) }}"
-    return render_template('popup.html.j2', widget=render_template_string(swidget, data=data))
+            swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data, cstyles.widget_table) }}"
+    return render_template('popup.html.j2', widget=render_template_string(swidget, data=data, cstyles=cstyles))
 # weeklypoints
 # mastered
 # srq
