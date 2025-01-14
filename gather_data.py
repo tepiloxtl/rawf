@@ -14,6 +14,7 @@ def RARequest(endpoint, **kwargs):
     # Paginated response with proper counter/total count
     if endpoint in ["GetUserCompletionProgress", "GetUserWantToPlayList", "GetUsersIFollow", "GetUsersFollowingMe", "GetGameLeaderboards", "GetLeaderboardEntries", "GetUserGameLeaderboards", "GetComments", "GetRecentGameAwards"]:
         apiresponse = requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq)).json()
+        # API_GetUserWantToPlayList returns [] for users with no wants, which I find kind of weird? Investigate that later?
         if "Results" not in apiresponse:
             return []
         response = {"Total": apiresponse["Total"], "Results": []}
@@ -240,7 +241,6 @@ def get_user_wants_to_play(username):
     print("Fetching want to play list for " + str(username))
     RAUserWantToPlayList = RARequest("GetUserWantToPlayList", u = str(username))
     #UserID INTEGER, GameID INTEGER, GameTitle TEXT, ConsoleID INTEGER, ImageIcon TEXT
-    # This request returns [] for users with no wants, which I find kind of weird? Investigate that later?
     if "Results" in RAUserWantToPlayList:
         c = conn.cursor()
         userid = [aa for aa in c.execute("SELECT ID from users WHERE User = '" + str(username) + "'").fetchone()][0]
@@ -254,6 +254,10 @@ def get_user_wants_to_play(username):
                         int(item["ConsoleID"]),
                         str(item["ImageIcon"])])
                 get_image(str(item["ImageIcon"]).split("/")[1], str(item["ImageIcon"]).split("/")[2])
+            else:
+                usergames.remove(item["ID"])
+        for item in usergames:
+            c.execute("DELETE FROM userwantstoplay WHERE UserID = ? AND GameID = ?;", [int(userid), int(item)])
         conn.commit()
 
 def get_user_set_requests(username):
@@ -274,6 +278,10 @@ def get_user_set_requests(username):
                         int(item["ConsoleID"]),
                         str(item["ImageIcon"])])
                 get_image(str(item["ImageIcon"]).split("/")[1], str(item["ImageIcon"]).split("/")[2])
+            else:
+                usergames.remove(item["GameID"])
+        for item in usergames:
+            c.execute("DELETE FROM setrequests WHERE UserID = ? AND GameID = ?;", [int(userid), int(item)])
         conn.commit()
 
 def get_image(type, id):
