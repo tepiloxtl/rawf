@@ -4,7 +4,9 @@ config = {**dotenv.dotenv_values(".env"), **os.environ}
 conn = sqlite3.connect("RA.db")
 
 requests = requests_ratelimiter.LimiterSession(per_second=1)
+requests.headers.update({"User-Agent": "rawf/2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
 requests_free = requests_ratelimiter.LimiterSession(per_second=500)
+requests_free.headers.update({"User-Agent": "rawf/2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
 
 def RARequest(endpoint, **kwargs):
     sreq = ""
