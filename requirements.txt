@@ -2,3 +2,4 @@ flask
 requests-ratelimiter
 schedule
 python-dotenv
+gunicorn

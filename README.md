@@ -7,11 +7,10 @@ Simple webpage panel that tracks RetroAchievement progress for a group of player
 2. Add your RA API key as `RA_APIKEY` either to your environment variables or into `.env` file
 3. Add your group members usernames to users.txt, one user per line
 4. (optional, recommended) Make a virtual environment
-5. `python3 -m pip install requirements.txt`
+5. `python3 -m pip install -r requirements.txt`
 6. (run once or when redoing the database) `python3 make_db.py`  
 To run the backend (retrieving data from API) run `python3 gather_data.py`  
-To run the frontend, run `flask run`. This will run werkzeug server at `127.0.0.1:5000`. Proxy it accordingly using a web server of your choice. It has ProxyFix already applied   
-TODO: Reconfigure to run with gunicorn or uWSGI
+To run the frontend, run `gunicorn -w 4 'webapp:app'`. This will run werkzeug server at `127.0.0.1:8000`. Proxy it accordingly using a web server of your choice. It has ProxyFix already applied (or use `flask run` to run development server on port 5000)
 
 ## Stuff
 A lot has still to be done here, but I like how it stands for now in general. I still aim to better use bootstrap, with setting up a proper theme being my current objective for one of those weekends. Also handling of timezones is pretty... loose, but thats how it comes from the RA API. I only support "additive" user data changes, nothing really ever gets checked whether stuff changes or gets removed. So a big boi feature to add would be monitoring on data change, such as achievements being demoted/changed, game info changing, or user requesting achievments to be removed from their account. Other than that, I don't think there are any big outstanding issues? Please prove me wrong if thats not the case though lol.
