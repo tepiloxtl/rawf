@@ -1,18 +1,5 @@
 import sqlite3, requests_ratelimiter, pprint, datetime, time, schedule, os, dotenv
 
-config = {**dotenv.dotenv_values(".env"), **os.environ}
-if "RAWF_INTERVAL" not in config:
-    config["RAWF_INTERVAL"] = 10
-if "RAWF_DBFILE" not in config:
-    config["RAWF_DBFILE"] = "RA.db"
-
-conn = sqlite3.connect(config["RAWF_DBFILE"])
-
-requests = requests_ratelimiter.LimiterSession(per_second=1)
-requests.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
-requests_free = requests_ratelimiter.LimiterSession(per_second=500)
-requests_free.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
-
 def RARequest(endpoint, **kwargs):
     sreq = ""
     for item in kwargs:
@@ -322,12 +309,41 @@ def update():
                 update_user(user.strip())
     conn.commit()
 
+requests = requests_ratelimiter.LimiterSession(per_second=1)
+requests.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
+requests_free = requests_ratelimiter.LimiterSession(per_second=500)
+requests_free.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
+
+config = {**dotenv.dotenv_values(".env"), **os.environ}
+if "RAWF_INTERVAL" not in config:
+    config["RAWF_INTERVAL"] = 10
+if "RAWF_DBFILE" not in config:
+    config["RAWF_DBFILE"] = "RA.db"
+
+if os.path.isfile(config["RAWF_DBFILE"]) == False:
+    print("Database not found, creating new database at " + str(config["RAWF_DBFILE"]))
+    conn = sqlite3.connect("RA.db")
+    c = conn.cursor()
+
+    c.execute("CREATE TABLE users (ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, ContribYield INTEGER, TotalPoints INTEGER, TotalSoftcorePoints INTEGER, TotalTruePoints INTEGER, Games INTEGER, GamesMastered INTEGER, Achievements INTEGER, Permissions INTEGER, Untracked INTEGER, UserWallActive INTEGER, Motto TEXT, LastUpdate INTEGER);")
+    c.execute("CREATE TABLE games (ID INTEGER PRIMARY KEY NOT NULL, Title TEXT, ConsoleID INTEGER, ConsoleName TEXT, ForumTopicID INTEGER, Flags INTEGER, ImageIcon TEXT, ImageTitle TEXT, ImageIngame TEXT, ImageBoxArt TEXT, Publisher TEXT, Developer TEXT, Genre TEXT, Released TEXT, ReleasedAtGranularity TEXT, GuideURL TEXT, Updated INTEGER, ParentGameID INTEGER, NumAchievements INTEGER);")
+    c.execute("CREATE TABLE usergames (UserID INTEGER, GameID INTEGER, NumAwarded INTEGER, NumAwardedHardcore INTEGER, MostRecentAwardedDate INTEGER, HighestAwardKind TEXT, HighestAwardDate INTEGER)")
+    c.execute("CREATE TABLE achievements (GameID INTEGER, ID INTEGER, Title TEXT, Description TEXT, Points INTEGER, TrueRatio REAL, Author TEXT, DateModified INTEGER, DateCreated INTEGER, BadgeName INTEGER, DisplayOrder INTEGER, type TEXT);")
+    c.execute("CREATE TABLE userachievements (UserID INTEGER, GameID INTEGER, AchievementID INTEGER, DateEarnedHardcore INTEGER, DateEarned INTEGER);")
+    c.execute("CREATE TABLE userwantstoplay (UserID INTEGER, GameID INTEGER, GameTitle TEXT, ConsoleID INTEGER, ImageIcon TEXT)")
+    c.execute("CREATE TABLE setrequests (UserID INTEGER, GameID INTEGER, GameTitle TEXT, ConsoleID INTEGER, ImageIcon TEXT)")
+    conn.commit()
+    update()
+    conn.close()
+
+conn = sqlite3.connect(config["RAWF_DBFILE"])
+
 for path in [os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'Badge'), os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'Images'), os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'UserPic')]:
     if os.path.exists(path) == False:
         os.makedirs(path)
 
 update()
-schedule.every(config["RAWF_INTERVAL"]).minutes.do(update)
+schedule.every(int(config["RAWF_INTERVAL"])).minutes.do(update)
 while True:
     schedule.run_pending()
     time.sleep(1)
