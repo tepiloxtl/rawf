@@ -1,7 +1,12 @@
 import sqlite3, requests_ratelimiter, pprint, datetime, time, schedule, os, dotenv
 
 config = {**dotenv.dotenv_values(".env"), **os.environ}
-conn = sqlite3.connect("RA.db")
+if "RAWF_INTERVAL" not in config:
+    config["RAWF_INTERVAL"] = 10
+if "RAWF_DBFILE" not in config:
+    config["RAWF_DBFILE"] = "RA.db"
+
+conn = sqlite3.connect(config["RAWF_DBFILE"])
 
 requests = requests_ratelimiter.LimiterSession(per_second=1)
 requests.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
@@ -322,7 +327,7 @@ for path in [os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'Badge'), os.p
         os.makedirs(path)
 
 update()
-schedule.every(10).minutes.do(update)
+schedule.every(config["RAWF_INTERVAL"]).minutes.do(update)
 while True:
     schedule.run_pending()
     time.sleep(1)
