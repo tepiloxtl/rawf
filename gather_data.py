@@ -37,6 +37,7 @@ def add_new_user(username):
     known_games = [game[0] for game in c.execute("SELECT ID FROM games").fetchall()]
     mastered_games = 0
     achievement_count = 0
+    gameids = {}
     for game in RAUserGames["Results"]:
         if game["GameID"] not in known_games:
             add_new_game(game["GameID"])
@@ -62,6 +63,7 @@ def add_new_user(username):
                            achievement["ID"],
                            int(time.mktime(datetime.datetime.strptime(achievement["DateEarnedHardcore"], "%Y-%m-%d %H:%M:%S").timetuple()) if "DateEarnedHardcore" in achievement else 0),
                            int(time.mktime(datetime.datetime.strptime(achievement["DateEarned"], "%Y-%m-%d %H:%M:%S").timetuple()) if "DateEarned" in achievement else 0)])
+        gameids[game["GameID"]] = int(time.time())
     get_image(str(RAUserProfile["UserPic"]).split("/")[1], str(RAUserProfile["UserPic"]).split("/")[2])
     # ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, 
     # ContribYield INTEGER, TotalPoints INTEGER, TotalSoftcorePoints INTEGER, TotalTruePoints INTEGER, Games INTEGER, GamesMastered INTEGER, Achievements INTEGER,
@@ -88,7 +90,7 @@ def add_new_user(username):
                 int(time.time())])
     get_user_wants_to_play(username)
     get_user_set_requests(username)
-    get_user_leaderboards(username)
+    get_user_leaderboards(username, gameids)
     conn.commit()
     print("Finished adding user " + str(username) + " to database")
 
@@ -305,26 +307,27 @@ def get_user_leaderboards(username, gamelist = {}):
     for item in gamelist:
         RAUserGameLeaderboards = RARequest("GetUserGameLeaderboards", u = username, i = str(item))
         #UserID INTEGER, GameID INTEGER, EntryID INTEGER, Score INTEGER, FormattedScore TEXT, Rank INTEGER, DateUpdated INTEGER
-        for entry in RAUserGameLeaderboards:
-            record = c.execute("SELECT * FROM userleaderboards WHERE UserID = ? AND GameID = ? AND EntryID = ?;", [int(userid), int(item), int(entry["ID"])]).fetchall()
-            if record:
-                c.execute("UPDATE userleaderboards SET Score = ?, FormattedScore = ?, Rank = ?, DateUpdated = ? WHERE UserID = ? AND GameID = ? AND EntryID = ?;",
-                          [int(entry["UserEntry"]["Score"]),
-                           str(entry["UserEntry"]["FormattedScore"]),
-                           int(entry["UserEntry"]["Rank"]),
-                           int(time.mktime(datetime.datetime.strptime(entry["UserEntry"]["DateUpdated"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple())),
-                           int(userid),
-                           int(item),
-                           int(entry["ID"])])
-            else:
-                c.execute("INSERT INTO userleaderboards VALUES (?, ?, ?, ?, ?, ?, ?);",
-                          [int(userid),
-                           int(item),
-                           int(entry["ID"]),
-                           int(entry["UserEntry"]["Score"]),
-                           str(entry["UserEntry"]["FormattedScore"]),
-                           int(entry["UserEntry"]["Rank"]),
-                           int(time.mktime(datetime.datetime.strptime(entry["UserEntry"]["DateUpdated"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple()))])
+        if "Results" in RAUserGameLeaderboards:
+            for entry in RAUserGameLeaderboards["Results"]:
+                record = c.execute("SELECT * FROM userleaderboards WHERE UserID = ? AND GameID = ? AND EntryID = ?;", [int(userid), int(item), int(entry["ID"])]).fetchall()
+                if record:
+                    c.execute("UPDATE userleaderboards SET Score = ?, FormattedScore = ?, Rank = ?, DateUpdated = ? WHERE UserID = ? AND GameID = ? AND EntryID = ?;",
+                            [int(entry["UserEntry"]["Score"]),
+                            str(entry["UserEntry"]["FormattedScore"]),
+                            int(entry["UserEntry"]["Rank"]),
+                            int(time.mktime(datetime.datetime.strptime(entry["UserEntry"]["DateUpdated"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple())),
+                            int(userid),
+                            int(item),
+                            int(entry["ID"])])
+                else:
+                    c.execute("INSERT INTO userleaderboards VALUES (?, ?, ?, ?, ?, ?, ?);",
+                            [int(userid),
+                            int(item),
+                            int(entry["ID"]),
+                            int(entry["UserEntry"]["Score"]),
+                            str(entry["UserEntry"]["FormattedScore"]),
+                            int(entry["UserEntry"]["Rank"]),
+                            int(time.mktime(datetime.datetime.strptime(entry["UserEntry"]["DateUpdated"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple()))])
     conn.commit()
 
 def get_image(type, id):
