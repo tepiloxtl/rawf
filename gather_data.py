@@ -151,7 +151,7 @@ def add_new_game(gameid):
                    str(entry["Description"]),
                    int(entry["RankAsc"]),
                    str(entry["Format"])])
-    print("Added " + str(RAGamelb["Total"]) + " leaderboards for " + str(RAGame["Title"]) + " to database")
+    print("Added " + str(len(RAGamelb["Results"])) + " leaderboards for " + str(RAGame["Title"]) + " to database")
     conn.commit()
 
 def update_user(username):
