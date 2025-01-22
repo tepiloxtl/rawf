@@ -24,6 +24,7 @@ def RARequest(endpoint, **kwargs):
             o = o + count
             apiresponse = requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq) + "&o=" + str(o)).json()
         return response
+    # Paginated response with legacy responses: GetUserRecentlyPlayedGames, GetGameList, GetAchievementUnlocks, GetTicketData
     # Non-paginated response
     else:
         return requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq)).json()
@@ -87,19 +88,21 @@ def add_new_user(username):
                 int(time.time())])
     get_user_wants_to_play(username)
     get_user_set_requests(username)
+    get_user_leaderboards(username)
     conn.commit()
     print("Finished adding user " + str(username) + " to database")
 
 def add_new_game(gameid):
     print("Querying game " + str(gameid))
     RAGame = RARequest("GetGameExtended", i = str(gameid))
+    RAGamelb = RARequest("GetGameLeaderboards", i = str(gameid))
     get_image(str(RAGame["ImageIcon"]).split("/")[1], str(RAGame["ImageIcon"]).split("/")[2])
     get_image(str(RAGame["ImageTitle"]).split("/")[1], str(RAGame["ImageTitle"]).split("/")[2])
     get_image(str(RAGame["ImageIngame"]).split("/")[1], str(RAGame["ImageIngame"]).split("/")[2])
     get_image(str(RAGame["ImageBoxArt"]).split("/")[1], str(RAGame["ImageBoxArt"]).split("/")[2])
     # with open("debuggames.txt", "a+", encoding = "utf-8") as f:
     #     pprint.pprint(RAGame, f, indent = 4, sort_dicts = False)
-    print("Adding new game " + str(RAGame["Title"]) + " and its achievements to database")
+    print("Adding new game " + str(RAGame["Title"]) + " to database")
     c = conn.cursor()
     c.execute("INSERT INTO games VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
               [RAGame["ID"],
@@ -136,6 +139,17 @@ def add_new_game(gameid):
                    RAGame["Achievements"][achievement]["BadgeName"],
                    RAGame["Achievements"][achievement]["DisplayOrder"],
                    RAGame["Achievements"][achievement]["type"]])
+    print("Added " + str(len(RAGame["Achievements"])) + " achievements for " + str(RAGame["Title"]) + " to database")
+    #ID INTEGER PRIMARY KEY NOT NULL, GameID INTEGER, Title TEXT, Description TEXT, RankAsc INTEGER, Format TEXT
+    for entry in RAGamelb["Results"]:
+        c.execute("INSERT INTO leaderboards VALUES (?, ?, ?, ?, ?, ?);",
+                  [int(entry["ID"]),
+                   int(gameid),
+                   str(entry["Title"]),
+                   str(entry["Description"]),
+                   int(entry["RankAsc"]),
+                   str(entry["Format"])])
+    print("Added " + str(RAGamelb["Total"]) + " leaderboards for " + str(RAGame["Title"]) + " to database")
     conn.commit()
 
 def update_user(username):
@@ -229,6 +243,7 @@ def update_user(username):
                    int(userid),])
         get_user_wants_to_play(username)
         get_user_set_requests(username)
+        get_user_leaderboards(username, updategames)
     conn.commit()
 
 def get_user_wants_to_play(username):
@@ -277,6 +292,40 @@ def get_user_set_requests(username):
         for item in usergames:
             c.execute("DELETE FROM setrequests WHERE UserID = ? AND GameID = ?;", [int(userid), int(item)])
         conn.commit()
+
+def get_user_leaderboards(username, gamelist = {}):
+    print("Fetching leaderboards data for " + str(username))
+    c = conn.cursor()
+    user = c.execute("SELECT ID, LastUpdate from users WHERE User = '" + str(username) + "'").fetchone()
+    userid = user[0]
+    if gamelist == {}:
+        RARecentlyPlayed = RARequest("GetUserRecentlyPlayedGames", u = str(username), c = "5")
+        for item in RARecentlyPlayed:
+            gamelist[item["GameID"]] = int(time.mktime(datetime.datetime.strptime(item["LastPlayed"], "%Y-%m-%d %H:%M:%S").timetuple()))
+    for item in gamelist:
+        RAUserGameLeaderboards = RARequest("GetUserGameLeaderboards", u = username, i = str(item))
+        #UserID INTEGER, GameID INTEGER, EntryID INTEGER, Score INTEGER, FormattedScore TEXT, Rank INTEGER, DateUpdated INTEGER
+        for entry in RAUserGameLeaderboards:
+            record = c.execute("SELECT * FROM userleaderboards WHERE UserID = ? AND GameID = ? AND EntryID = ?;", [int(userid), int(item), int(entry["ID"])]).fetchall()
+            if record:
+                c.execute("UPDATE userleaderboards SET Score = ?, FormattedScore = ?, Rank = ?, DateUpdated = ? WHERE UserID = ? AND GameID = ? AND EntryID = ?;",
+                          [int(entry["UserEntry"]["Score"]),
+                           str(entry["UserEntry"]["FormattedScore"]),
+                           int(entry["UserEntry"]["Rank"]),
+                           int(time.mktime(datetime.datetime.strptime(entry["UserEntry"]["DateUpdated"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple())),
+                           int(userid),
+                           int(item),
+                           int(entry["ID"])])
+            else:
+                c.execute("INSERT INTO userleaderboards VALUES (?, ?, ?, ?, ?, ?, ?);",
+                          [int(userid),
+                           int(item),
+                           int(entry["ID"]),
+                           int(entry["UserEntry"]["Score"]),
+                           str(entry["UserEntry"]["FormattedScore"]),
+                           int(entry["UserEntry"]["Rank"]),
+                           int(time.mktime(datetime.datetime.strptime(entry["UserEntry"]["DateUpdated"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple()))])
+    conn.commit()
 
 def get_image(type, id):
     if type == "Badge":
@@ -330,6 +379,8 @@ if os.path.isfile(config["RAWF_DBFILE"]) == False:
     c.execute("CREATE TABLE usergames (UserID INTEGER, GameID INTEGER, NumAwarded INTEGER, NumAwardedHardcore INTEGER, MostRecentAwardedDate INTEGER, HighestAwardKind TEXT, HighestAwardDate INTEGER)")
     c.execute("CREATE TABLE achievements (GameID INTEGER, ID INTEGER, Title TEXT, Description TEXT, Points INTEGER, TrueRatio REAL, Author TEXT, DateModified INTEGER, DateCreated INTEGER, BadgeName INTEGER, DisplayOrder INTEGER, type TEXT);")
     c.execute("CREATE TABLE userachievements (UserID INTEGER, GameID INTEGER, AchievementID INTEGER, DateEarnedHardcore INTEGER, DateEarned INTEGER);")
+    c.execute("CREATE TABLE leaderboards (ID INTEGER PRIMARY KEY NOT NULL, GameID INTEGER, Title TEXT, Description TEXT, RankAsc INTEGER, Format TEXT)")
+    c.execute("CREATE TABLE userleaderboards (UserID INTEGER, GameID INTEGER, EntryID INTEGER, Score INTEGER, FormattedScore TEXT, Rank INTEGER, DateUpdated INTEGER)")
     c.execute("CREATE TABLE userwantstoplay (UserID INTEGER, GameID INTEGER, GameTitle TEXT, ConsoleID INTEGER, ImageIcon TEXT)")
     c.execute("CREATE TABLE setrequests (UserID INTEGER, GameID INTEGER, GameTitle TEXT, ConsoleID INTEGER, ImageIcon TEXT)")
     conn.commit()
