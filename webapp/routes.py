@@ -83,7 +83,7 @@ def get_leaderboards(username = None):
     if username != None:
         query += " WHERE u.User = ?"
         args.append(username)
-    
+    query += " ORDER BY lb.ID"
     leaderboards = query_db(query, args)
     return leaderboards
 
