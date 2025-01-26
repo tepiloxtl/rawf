@@ -1,6 +1,8 @@
 {% extends "base.html.j2" %}
+{% import 'widgets.html.j2' as widgets %}
 
 {% block content %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <div class="userpage">
         <div class="ra-btn"><a href="https://retroachievements.org/user/{{ user.User }}" data-umami-event="RA userpage"><img src="/static/img/ra-icon.webp" width=64></a></div>
         <div>
@@ -18,9 +20,69 @@
                 Achievements: {{ user.Achievements }}<br>
             </div>
         </div>
+        <div class="row row-cols-2" style="width: 66%; margin: auto;">
+            <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>{{ user.User }} wants to play:</b></div><div><a onclick="window.open('widget/wtpg', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue;"></i></a></div></div>
+                <div>
+                    {{ widgets.widget_list_gamebyuser(wtpg, cstyles.widget_table) }}
+                </div>
+            </div>
+            <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Weekly points graph</b></div><div><a onclick="window.open('widget/weeklypoints', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue;"></i></a></div></div>
+                <div>
+                    {{ widgets.widget_pointsgraph(pointsgraph, cstyles.widget_graph) }}
+                </div>
+            </div>
+        </div>
         <div>
             <h1>Games: {{ user.GamesMastered }} / {{ user.Games }}</h1>
-            <table class="table table-striped table-hover">
+            <ul class="list-group list-group-flush">
+                    {% for game in usergames %}
+                    <li class="list-group-item">
+                        <div style="display: inline-block; width: calc(100% - 140px) ">
+                            <div style="display: inline-block; width: calc(100% - 10em)">
+                                <div style="display: inline-block;"><img src="/static/img{{ game.ImageIcon }}" width="64"></div><div style="display: inline-block;"><a href="/game/{{ game.ID }}?u={{user.User}}">{{ game.Title }}</a><br><a href="/console/{{ game.ConsoleID }}">{{ game.ConsoleName }}</a>
+                            </div>
+                            <div style="display: inline-block; position:absolute; right:0; width:10em;">
+                                <div class="progress" role="progressbar" aria-label="Progress" aria-valuenow="{{ game.NumHardcoreUnlocksp }}" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar bg-warning text-dark" style="width: {{ game.NumHardcoreUnlocksp }}%">{{ game.NumHardcoreUnlocksp }}%</div>
+                                </div>
+                            </div>
+                            <div>
+                                Achievements: {{game.NumAwardedHardcore}}/{{game.NumAchievements}}
+                            </div>
+                            {% if game.HasLeaderboards == true %}
+                            <div>
+                                Leaderboards:
+                                <div>
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Description</th>
+                                            <th>Rank</th>
+                                            <th>Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for lbentry in leaderboards %}
+                                        {% if game.ID == lbentry.GameID%}
+                                        <tr>
+                                            <td>{{lbentry.Title}}</td>
+                                            <td>{{lbentry.Description}}</td>
+                                            <td>{{lbentry.Rank}}</td>
+                                            <td>{{lbentry.FormattedScore}}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {# <table class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>Title</th>
@@ -41,7 +103,7 @@
                     </tr>
                     {% endfor %}
                 </tbody>
-            </table>
+            </table> #}
         </div>
     </div>
 {% endblock %}

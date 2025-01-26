@@ -34,9 +34,14 @@ def safereplace(value, repllist):
 def titlebadges(title):
     return safereplace(title, [["~Prototype~", '<span class="badge bg-primary">Prototype</span>'], ["~Hack~", '<span class="badge bg-primary">Hack</span>'], ["~Demo~", '<span class="badge bg-primary">Demo</span>'], ["~Homebrew~", '<span class="badge bg-primary">Homebrew</span>']])
 
-def get_want_to_play_games():
+def get_want_to_play_games(username = None):
+    query = "SELECT uw.GameID, uw.GameTitle, uw.ConsoleID, uw.ImageIcon, u.User, g.ID FROM userwantstoplay uw INNER JOIN users u ON uw.UserID = u.ID LEFT JOIN games g on uw.GameID = g.ID"
+    args = []
+    if username != None:
+        query += " WHERE u.User = ?"
+        args.append(username)
     #UserID INTEGER, GameID INTEGER, GameTitle TEXT, ConsoleID INTEGER, ImageIcon TEXT
-    wtpg = query_db("SELECT uw.GameID, uw.GameTitle, uw.ConsoleID, uw.ImageIcon, u.User, g.ID FROM userwantstoplay uw INNER JOIN users u ON uw.UserID = u.ID LEFT JOIN games g on uw.GameID = g.ID;")
+    wtpg = query_db(query, args)
     #pprint.pprint(wtpg, indent=4)
     wtpgdone = {}
     for item in wtpg:
@@ -72,8 +77,18 @@ def get_set_requests():
     setrequestsdone = sorted(setrequestsdone.values(), key=lambda item: (-len(item.get("Users", [])), item.get("Title", "").startswith("<span"), item.get("Title", "")))
     return setrequestsdone
 
+def get_leaderboards(username = None):
+    query = "SELECT ulb.GameID, ulb.FormattedScore, ulb.Rank, ulb.DateUpdated, g.Title, lb.Title, lb.Description, lb.RankAsc, lb.Format, u.User FROM userleaderboards ulb INNER JOIN users u ON ulb.UserID = u.ID LEFT JOIN leaderboards lb ON ulb.EntryID = lb.ID LEFT JOIN games g on lb.GameID = g.ID"
+    args = []
+    if username != None:
+        query += " WHERE u.User = ?"
+        args.append(username)
+    
+    leaderboards = query_db(query, args)
+    return leaderboards
 
-def pointsgraph():
+
+def pointsgraph(username = None):
     now = datetime.datetime.now()
     start_of_today = datetime.datetime(now.year, now.month, now.day)
     seven_days_ago = (start_of_today - datetime.timedelta(days=6))
@@ -81,7 +96,8 @@ def pointsgraph():
     seven_days_ago_ts = int(seven_days_ago.timestamp())
     now_ts = int(now.timestamp())
 
-    graphdata = query_db("""
+    args = [seven_days_ago_ts, now_ts]
+    query = """
 WITH RECURSIVE date_range(day) AS (
     SELECT DATE('now', '-6 days') -- Start from 7 days ago (inclusive of today)
     UNION ALL
@@ -94,9 +110,12 @@ daily_scores AS (
         DATE(ua.DateEarnedHardcore, 'unixepoch') AS day,
         SUM(a.Points) AS daily_total
     FROM 
-        userachievements ua JOIN achievements a ON ua.GameID = a.GameID AND ua.AchievementID = a.ID
+        userachievements ua
+        JOIN achievements a ON ua.GameID = a.GameID AND ua.AchievementID = a.ID
+        JOIN users u ON ua.UserID = u.ID
     WHERE 
         DateEarnedHardcore >= ? AND DateEarnedHardcore <= ?
+        {username_condition}
     GROUP BY 
         DATE(DateEarnedHardcore, 'unixepoch')
 )
@@ -109,8 +128,17 @@ FROM
 LEFT JOIN 
     daily_scores ds ON dr.day = ds.day
 ORDER BY 
-    dr.day;
-""", args=[seven_days_ago_ts, now_ts])
+    dr.day"""
+
+    if username:
+        username_condition = "AND u.User = ?"
+        args.append(username)
+    else:
+        username_condition = ""
+    
+    query = query.format(username_condition=username_condition)
+
+    graphdata = query_db(query, args)
     day = []
     daily = []
     cumulative = []
@@ -155,18 +183,24 @@ FROM
     srq = get_set_requests()
     cstyles = {"widget_table": {"class": "scrollable-table table-260 border rounded"},
                "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:260px; width:100%;"}}
+    # pprint.pprint(get_leaderboards(), indent=4)
     return render_template('index.html.j2', Title='Home', users=sqlusers, achievements=achievements, wtpg=wtpg, pointsgraph=pg, mastered=mastered, srq=srq, cstyles=cstyles)
 
 @app.route('/user/<username>')
 def userpage(username):
     user = query_db("select u.*, g.Title as gTitle from users u LEFT JOIN games g ON u.LastGameID = g.ID WHERE User = ?;", args = [str(username)], one=True)
-    usergames = query_db("SELECT g.ID, g.Title, g.ConsoleName, g.ConsoleID, g.ImageIcon, g.NumAchievements FROM usergames ug INNER JOIN games g ON g.ID = ug.GameID WHERE UserID = ? ORDER BY MostRecentAwardedDate DESC;", args = [str(user["ID"])])
-    wtpg = query_db("SELECT uw.GameID, uw.GameTitle, uw.ImageIcon, g.ID FROM userwantstoplay uw INNER JOIN users u ON uw.UserID = u.ID LEFT JOIN games g on uw.GameID = g.ID WHERE u.User = ?;", args = [str(username)])
+    usergames = query_db("SELECT g.ID, g.Title, g.ConsoleName, g.ConsoleID, g.ImageIcon, g.NumAchievements, ug.NumAwardedHardcore FROM usergames ug INNER JOIN games g ON g.ID = ug.GameID WHERE UserID = ? ORDER BY MostRecentAwardedDate DESC;", args = [str(user["ID"])])
+    wtpg = get_want_to_play_games(username)
+    pg = pointsgraph(username)
+    lb = get_leaderboards(username)
+    cstyles = {"widget_table": {"class": "scrollable-table table-260 border rounded"},
+               "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:260px; width:100%;"}}
     for game in usergames:
         game["NumHardcoreUnlocksp"] = int((len(query_db("SELECT AchievementID FROM userachievements WHERE UserID = ? AND GameID = ?", args=[int(user["ID"]), int(game["ID"])])) / int(game["NumAchievements"])) * 100)
         game["Title"] = titlebadges(game["Title"])
+        game["HasLeaderboards"] = any(item["GameID"] == int(game["ID"]) for item in lb)
     #pprint.pprint(usergames, indent=4)
-    return render_template('user.html.j2', Title=str(username) + ' userpage', user=user, usergames=usergames, wtpg=wtpg)
+    return render_template('user.html.j2', Title=str(username) + ' userpage', user=user, usergames=usergames, wtpg=wtpg, pointsgraph = pg, leaderboards = lb, cstyles = cstyles)
 
 @app.route('/games')
 def allgamespage():
