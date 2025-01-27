@@ -350,6 +350,7 @@ def get_image(type, id):
                     f.write(chunk)
 
 def update():
+    print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ": update users started")
     c = conn.cursor()
     dbusers = [user[0] for user in c.execute("SELECT User from users").fetchall()]
     with open("users.txt", "r", encoding = "utf-8") as fileusers:
@@ -360,6 +361,7 @@ def update():
             else:
                 update_user(user.strip())
     conn.commit()
+    print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ": update users finished")
 
 requests = requests_ratelimiter.LimiterSession(per_second=1)
 requests.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
