@@ -10,10 +10,10 @@
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div><h2>Hunters</h2></div>
                     <div>
-                        <div class="btn-group" id="update-js" role="group" aria-label="Basic example">
-                            <button type="button" class="btn btn-primary" payload="lb-week">Week</button>
-                            <button type="button" class="btn btn-primary" payload="lb-month">Month</button>
-                            <button type="button" class="btn btn-primary" payload="lb-all">All time</button>
+                        <div class="btn-group" id="update-js" role="group">
+                            <button type="button" class="btn btn-primary" payload="hunters-week">Week</button>
+                            <button type="button" class="btn btn-primary" payload="hunters-month">Month</button>
+                            <button type="button" class="btn btn-primary" payload="hunters-all">All time</button>
                         </div>
                     </div>
                 </div>
@@ -27,39 +27,25 @@
                                 <th>Points</th>
                             </tr>
                         </thead>
-                        <tbody id="lb">
-                            {% for user in users %}
-                            <tr>
-                                <td><img src="/static/img{{ user.UserPic }}" width=24> <a href="/user/{{ user.User}}">{{ user.User }}{% if user.Permissions == 2 %}🔧{% endif %}</a></td>
-                                <td>{{ user.GamesMastered }} / {{ user.Games }}</td>
-                                <td>{{ user.Achievements }}</td>
-                                <td>{{ user.TotalPoints }}</td>
-                            </tr>
-                            {% endfor %}
+                        <tbody id="hunters">
+                            {{ widgets.widget_hunters(users, "") }}
                         </tbody>
                     </table>
                 </div>
             </div>
             <div class="side-by-side">
-                <h2>Recent achievements</h2>
-                <ul class="list-group list-group-flush scrollable-list border rounded">
-                    {% for achievement in achievements%}
-                    <li class="list-group-item achievement">
-                        <div style="vertical-align: top; display: inline-block; ">
-                            <img src="/static/img{{ achievement.ImageIcon }}">
-                            <img src="/static/img/Badge/{{ achievement.BadgeName }}.png">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div><h2>Activity feed</h2></div>
+                    <div>
+                        <div class="btn-group" id="update-js" role="group">
+                            <button type="button" class="btn btn-primary" payload="feed-achievements">Achievements</button>
+                            <button type="button" class="btn btn-primary" payload="feed-combined">Both</button>
+                            <button type="button" class="btn btn-primary" payload="feed-leaderboards">Leaderboards</button>
                         </div>
-                        <div style="display: inline-block; width: calc(100% - 140px) ">
-                            <div style="display: inline-block; width: calc(100% - 10em)">
-                                <a href="/user/{{ achievement.User}}">{{ achievement.User }}</a> unlocked {{ achievement.aTitle }} in <a href="/game/{{ achievement.ID }}?u={{ achievement.User }}">{{ achievement.gTitle }}</a> 
-                            </div>
-                            <div style="display: inline-block; position:absolute; right:0;">{{achievement.DateEarned}}</div>
-                            <div>
-                                {{ achievement.Description }}
-                            </div>
-                        </div>
-                    </li>
-                    {% endfor %}
+                    </div>
+                </div>
+                <ul class="list-group list-group-flush scrollable-list border rounded" id="feed">
+                    {{ widgets.widget_feed(achievements, "") }}
                 </ul>
             </div>
         </div>

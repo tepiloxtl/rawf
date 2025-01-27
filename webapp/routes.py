@@ -1,7 +1,7 @@
 from flask import render_template, render_template_string, g, request
 from markupsafe import Markup, escape
 from webapp import app
-import sqlite3, datetime, pprint
+import sqlite3, datetime, pprint # type: ignore
 
 DATABASE = 'RA.db'
 
@@ -151,23 +151,28 @@ ORDER BY
     cumulative = ", ".join(cumulative)
     return {"day": day, "daily": daily, "cumulative": cumulative}
 
-
-@app.route('/')
-@app.route('/index')
-def index():
-    sqlusers = query_db('select * from users ORDER BY TotalPoints DESC')
-    achievements = []
-    sqlachievements = query_db("""SELECT
+def activity_feed(type = "combined", username = None):
+    # 'Type': 'achievement' or 'leaderboard'
+    # 'User': Username
+    # 'aTitle': Achievement/leaderboard title
+    # 'Description': Achievement/leaderboard description
+    # 'Icon1': Game icon in both cases
+    # 'Icon2': Achievement icon for Achievements... uh, idk, user profile pic for leaderboards?
+    # 'gTitle': Game name
+    # 'ID': Game ID
+    # 'DateEarned': Date Earned
+    # 'FormattedScore': Leaderboard score, None for achievements
+    # 'Rank': Global leaderboard rank, None for achievements
+    # 'LocalRank': Local (rawf instance) leaderboard rank, None for achievements
+    if type == "achievements":
+        resp = query_db("""SELECT
   u.User,
-  u.Games,
-  u.GamesMastered,
-  u.Achievements,
   a.Title AS aTitle,
   a.Description,
-  a.BadgeName,
+  g.ImageIcon AS Icon1,
+  a.BadgeName AS Icon2,
   g.Title AS gTitle,
   g.ID,
-  g.ImageIcon,
   ua.DateEarned
 FROM
   userachievements ua
@@ -175,8 +180,56 @@ FROM
   INNER JOIN users u ON u.ID = ua.UserID
   INNER JOIN games g ON g.ID = ua.GameID
   ORDER BY ua.DateEarned DESC LIMIT 50;""")
-    for a in sqlachievements:
-        achievements.append({"User": a["User"], "aTitle": a["aTitle"], "Description": a["Description"], "BadgeName": a["BadgeName"], "gTitle": titlebadges(a["gTitle"]), "ID": a["ID"], "ImageIcon": a["ImageIcon"], "DateEarned": datetime.datetime.fromtimestamp(a["DateEarned"]).strftime("%Y-%m-%d %H:%M:%S")})
+        for item in resp:
+            item["Type"] = "achievement"
+            item["gTitle"] = titlebadges(item["gTitle"])
+            item["DateEarnedts"] = item["DateEarned"]
+            item["DateEarned"] = datetime.datetime.fromtimestamp(item["DateEarned"]).strftime("%Y-%m-%d %H:%M:%S")
+            item['FormattedScore'] = None
+            item['Rank'] = None
+            item['LocalRank'] = None
+        return resp
+    elif type == "leaderboards":
+        resp = query_db("""SELECT 
+  u.User,
+  lb.Title AS aTitle,
+  lb.Description,
+  ulb.GameID,
+  g.ImageIcon AS Icon1,
+  u.UserPic AS Icon2,
+  g.Title AS gTitle,
+  g.ID,
+  ulb.DateUpdated AS DateEarned,
+  ulb.FormattedScore, 
+  ulb.Rank,     
+  lb.RankAsc, 
+  lb.Format
+FROM
+  userleaderboards ulb 
+  INNER JOIN users u ON ulb.UserID = u.ID 
+  LEFT JOIN leaderboards lb ON ulb.EntryID = lb.ID 
+  LEFT JOIN games g on lb.GameID = g.ID 
+  ORDER BY ulb.DateUpdated DESC LIMIT 50;""")
+        for item in resp:
+            item["Type"] = "leaderboard"
+            item["gTitle"] = titlebadges(item["gTitle"])
+            item["DateEarnedts"] = item["DateEarned"]
+            item["DateEarned"] = datetime.datetime.fromtimestamp(item["DateEarned"]).strftime("%Y-%m-%d %H:%M:%S")
+        return resp
+    elif type == "combined":
+        resp1 = activity_feed("achievements", username)
+        resp2 = activity_feed("leaderboards", username)
+        #Combine results here
+        return sorted(resp1 + resp2, key=lambda x: x["DateEarnedts"], reverse=True)[:50]
+    else:
+        return None
+
+
+@app.route('/')
+@app.route('/index')
+def index():
+    sqlusers = query_db('select * from users ORDER BY TotalPoints DESC')
+    achievements = activity_feed("achievements")
     wtpg = get_want_to_play_games()
     pg = pointsgraph()
     mastered = get_mastered_games()
@@ -264,18 +317,10 @@ def update_page():
     type = request.get_json()
     type = type["type"]
     match type:
-        case "lb-all":
+        case "hunters-all":
             sqlusers = query_db('select * from users ORDER BY TotalPoints DESC')
-            template = """{% for user in users %}
-<tr>
-    <td><img src="/static/img{{ user.UserPic }}" width=24> <a href="/user/{{ user.User}}">{{ user.User }}{% if user.Permissions == 2 %}🔧{% endif %}</a></td>
-    <td>{{ user.GamesMastered }} / {{ user.Games }}</td>
-    <td>{{ user.Achievements }}</td>
-    <td>{{ user.TotalPoints }}</td>
-</tr>
-{% endfor %}"""
-            return render_template_string(template, users = sqlusers)
-        case "lb-week":
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(users, "") }}", users = sqlusers)
+        case "hunters-week":
             sqlusers = query_db("""WITH current_week AS (
     SELECT 
         ua.UserID,
@@ -307,16 +352,8 @@ FROM
 GROUP BY 
     User, UserID, UserPic, Permissions
 ORDER BY TotalPoints DESC;""")
-            template = """{% for user in users %}
-<tr>
-    <td><img src="/static/img{{ user.UserPic }}" width=24> <a href="/user/{{ user.User}}">{{ user.User }}{% if user.Permissions == 2 %}🔧{% endif %}</a></td>
-    <td>{{ user.UniqueGamesPlayed }}</td>
-    <td>{{ user.Achievements }}</td>
-    <td>{{ user.TotalPoints }}</td>
-</tr>
-{% endfor %}"""
-            return render_template_string(template, users = sqlusers)
-        case "lb-month":
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(users, "") }}", users = sqlusers)
+        case "hunters-month":
             sqlusers = query_db("""WITH current_week AS (
     SELECT 
         ua.UserID,
@@ -348,15 +385,16 @@ FROM
 GROUP BY 
     User, UserID, UserPic, Permissions
 ORDER BY TotalPoints DESC;""")
-            template = """{% for user in users %}
-<tr>
-    <td><img src="/static/img{{ user.UserPic }}" width=24> <a href="/user/{{ user.User}}">{{ user.User }}{% if user.Permissions == 2 %}🔧{% endif %}</a></td>
-    <td>{{ user.UniqueGamesPlayed }}</td>
-    <td>{{ user.Achievements }}</td>
-    <td>{{ user.TotalPoints }}</td>
-</tr>
-{% endfor %}"""
-            return render_template_string(template, users = sqlusers)
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(users, "") }}", users = sqlusers)
+        case "feed-achievements":
+            feed = achievements = activity_feed("achievements")
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(achievements, "") }}", achievements = feed)
+        case "feed-leaderboards":
+            feed = achievements = activity_feed("leaderboards")
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(achievements, "") }}", achievements = feed)
+        case "feed-combined":
+            feed = achievements = activity_feed("combined")
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(achievements, "") }}", achievements = feed)
         case _:
             return ""
 

@@ -4,9 +4,12 @@ const endpoint = '/api/update';
 
 // Create a mapping of payload types to specific DOM element IDs
 const responseMapping = {
-    'lb-week': 'lb',
-    'lb-month': 'lb',
-    'lb-all': 'lb'
+    'hunters-week': 'hunters',
+    'hunters-month': 'hunters',
+    'hunters-all': 'hunters',
+    'feed-achievements': 'feed',
+    'feed-leaderboards': 'feed',
+    'feed-combined': 'feed'
 };
 
 // Add event listeners to buttons within the specific divs

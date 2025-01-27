@@ -1,4 +1,4 @@
-import sqlite3, requests_ratelimiter, pprint, datetime, time, schedule, os, dotenv
+import sqlite3, requests_ratelimiter, pprint, datetime, time, schedule, os, dotenv # type: ignore
 
 def RARequest(endpoint, **kwargs):
     sreq = ""
@@ -399,7 +399,7 @@ for path in [os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'Badge'), os.p
         os.makedirs(path)
 
 update()
-schedule.every(int(config["RAWF_INTERVAL"])).minutes.do(update)
+schedule.every(int(config["RAWF_INTERVAL"])).minutes.at(":00").do(update)
 while True:
     schedule.run_pending()
     time.sleep(1)
