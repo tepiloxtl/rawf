@@ -5,19 +5,36 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <div class="userpage">
         <div class="ra-btn"><a href="https://retroachievements.org/user/{{ user.User }}" data-umami-event="RA userpage"><img src="/static/img/ra-icon.webp" width=64></a></div>
-        <div>
-            <div style="vertical-align: top; display: inline-block; ">
-                <img src="/static/img{{ user.UserPic }}">
+        <div class="row row-cols-md-1 row-cols-lg-2">
+            <div class="col">
+                <div style="vertical-align: top; display: inline-block; ">
+                    <img src="/static/img{{ user.UserPic }}">
+                </div>
+                <div style="display: inline-block;">
+                    <h1>{{ user.User }}</h1>
+                    {{ user.Motto }}<br>
+                    Last played: <br>
+                    {{ user.gTitle }}: {{ user.RichPresenceMsg }}<br>
+                    Points: {{ user.TotalTruePoints }}<br>
+                    Softcore Points: {{ user.TotalSoftcorePoints }}<br>
+                    Hardcore Points: {{ user.TotalPoints }}<br>
+                    Achievements: {{ user.Achievements }}<br>
+                </div>
             </div>
-            <div style="display: inline-block;">
-                <h1>{{ user.User }}</h1>
-                {{ user.Motto }}<br>
-                Last played: <br>
-                {{ user.gTitle }}: {{ user.RichPresenceMsg }}<br>
-                Points: {{ user.TotalTruePoints }}<br>
-                Softcore Points: {{ user.TotalSoftcorePoints }}<br>
-                Hardcore Points: {{ user.TotalPoints }}<br>
-                Achievements: {{ user.Achievements }}<br>
+            <div class="col">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div><h2>Activity feed</h2></div>
+                    <div>
+                        <div class="btn-group" id="update-js" role="group">
+                            <button type="button" class="btn btn-primary" payload="feed-achievements">Achievements</button>
+                            <button type="button" class="btn btn-primary" payload="feed-combined">Both</button>
+                            <button type="button" class="btn btn-primary" payload="feed-leaderboards">Leaderboards</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="feed">
+                    {{ widgets.widget_feed(feed, cstyles.widget_feed) }}
+                </div>
             </div>
         </div>
         <div class="row row-cols-2" style="width: 66%; margin: auto;">
@@ -106,4 +123,5 @@
             </table> #}
         </div>
     </div>
+    <script src="/static/js/update.js"></script>
 {% endblock %}

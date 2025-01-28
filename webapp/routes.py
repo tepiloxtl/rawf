@@ -164,8 +164,12 @@ def activity_feed(type = "combined", username = None):
     # 'FormattedScore': Leaderboard score, None for achievements
     # 'Rank': Global leaderboard rank, None for achievements
     # 'LocalRank': Local (rawf instance) leaderboard rank, None for achievements
+    args=[]
+    username_condition = ""
+    if username != None:
+        args = [username]
     if type == "achievements":
-        resp = query_db("""SELECT
+        query = """SELECT
   u.User,
   a.Title AS aTitle,
   a.Description,
@@ -179,7 +183,12 @@ FROM
   INNER JOIN achievements a ON a.ID = ua.AchievementID
   INNER JOIN users u ON u.ID = ua.UserID
   INNER JOIN games g ON g.ID = ua.GameID
-  ORDER BY ua.DateEarned DESC LIMIT 50;""")
+{username_condition}
+ORDER BY ua.DateEarned DESC LIMIT 50;"""
+        if username:
+            username_condition = "WHERE u.User = ?"
+        query = query.format(username_condition=username_condition)
+        resp = query_db(query, args=args)
         for item in resp:
             item["Type"] = "achievement"
             item["gTitle"] = titlebadges(item["gTitle"])
@@ -190,7 +199,7 @@ FROM
             item['LocalRank'] = None
         return resp
     elif type == "leaderboards":
-        resp = query_db("""SELECT 
+        query = """SELECT 
   u.User,
   lb.Title AS aTitle,
   lb.Description,
@@ -209,7 +218,12 @@ FROM
   INNER JOIN users u ON ulb.UserID = u.ID 
   LEFT JOIN leaderboards lb ON ulb.EntryID = lb.ID 
   LEFT JOIN games g on lb.GameID = g.ID 
-  ORDER BY ulb.DateUpdated DESC LIMIT 50;""")
+{username_condition}
+ORDER BY ulb.DateUpdated DESC LIMIT 50;"""
+        if username:
+            username_condition = "WHERE u.User = ?"
+        query = query.format(username_condition=username_condition)
+        resp = query_db(query, args=args)
         for item in resp:
             item["Type"] = "leaderboard"
             item["gTitle"] = titlebadges(item["gTitle"])
@@ -244,17 +258,19 @@ def index():
 def userpage(username):
     user = query_db("select u.*, g.Title as gTitle from users u LEFT JOIN games g ON u.LastGameID = g.ID WHERE User = ?;", args = [str(username)], one=True)
     usergames = query_db("SELECT g.ID, g.Title, g.ConsoleName, g.ConsoleID, g.ImageIcon, g.NumAchievements, ug.NumAwardedHardcore FROM usergames ug INNER JOIN games g ON g.ID = ug.GameID WHERE UserID = ? ORDER BY MostRecentAwardedDate DESC;", args = [str(user["ID"])])
-    wtpg = get_want_to_play_games(username)
-    pg = pointsgraph(username)
     lb = get_user_leaderboards(username)
-    cstyles = {"widget_table": {"class": "scrollable-table table-260 border rounded"},
-               "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:260px; width:100%;"}}
     for game in usergames:
         game["NumHardcoreUnlocksp"] = int((len(query_db("SELECT AchievementID FROM userachievements WHERE UserID = ? AND GameID = ?", args=[int(user["ID"]), int(game["ID"])])) / int(game["NumAchievements"])) * 100)
         game["Title"] = titlebadges(game["Title"])
         game["HasLeaderboards"] = any(item["GameID"] == int(game["ID"]) for item in lb)
+    wtpg = get_want_to_play_games(username)
+    pg = pointsgraph(username)
+    feed = activity_feed(type="combined", username=username)
+    cstyles = {"widget_table": {"class": "scrollable-table table-260 border rounded"},
+               "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:260px; width:100%;"},
+               "widget_feed": {"class": "list-group list-group-flush scrollable-list border rounded"}}
     #pprint.pprint(usergames, indent=4)
-    return render_template('user.html.j2', Title=str(username) + ' userpage', user=user, usergames=usergames, wtpg=wtpg, pointsgraph = pg, leaderboards = lb, cstyles = cstyles)
+    return render_template('user.html.j2', Title=str(username) + ' userpage', user=user, usergames=usergames, wtpg=wtpg, pointsgraph = pg, leaderboards = lb, feed=feed, cstyles = cstyles)
 
 @app.route('/games')
 def allgamespage():
@@ -315,12 +331,14 @@ def popupwidget(widget):
 
 @app.route("/api/update", methods=["POST"])
 def update_page():
+    cstyles = {"widget_hunters": {"class": "scrollable-table table-300 border rounded"},
+            "widget_feed": {"class": "list-group list-group-flush scrollable-list border rounded"}}
     type = request.get_json()
     type = type["type"]
     match type:
         case "hunters-all":
             sqlusers = query_db('select * from users ORDER BY TotalPoints DESC')
-            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(users, "") }}", users = sqlusers)
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(data, cstyles.widget_hunters) }}", data = sqlusers, cstyles=cstyles)
         case "hunters-week":
             sqlusers = query_db("""WITH current_week AS (
     SELECT 
@@ -353,7 +371,7 @@ FROM
 GROUP BY 
     User, UserID, UserPic, Permissions
 ORDER BY TotalPoints DESC;""")
-            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(users, "") }}", users = sqlusers)
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(data, cstyles.widget_hunters) }}", data = sqlusers, cstyles=cstyles)
         case "hunters-month":
             sqlusers = query_db("""WITH current_week AS (
     SELECT 
@@ -386,16 +404,16 @@ FROM
 GROUP BY 
     User, UserID, UserPic, Permissions
 ORDER BY TotalPoints DESC;""")
-            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(users, "") }}", users = sqlusers)
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(data, cstyles.widget_hunters) }}", data = sqlusers, cstyles=cstyles)
         case "feed-achievements":
-            feed = achievements = activity_feed("achievements")
-            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(achievements, "") }}", achievements = feed)
+            feed = activity_feed("achievements")
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(data, cstyles.widget_feed) }}", data = feed, cstyles=cstyles)
         case "feed-leaderboards":
-            feed = achievements = activity_feed("leaderboards")
-            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(achievements, "") }}", achievements = feed)
+            feed = activity_feed("leaderboards")
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(data, cstyles.widget_feed) }}", data = feed, cstyles=cstyles)
         case "feed-combined":
             feed = achievements = activity_feed("combined")
-            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(achievements, "") }}", achievements = feed)
+            return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(data, cstyles.widget_feed) }}", data = feed, cstyles=cstyles)
         case _:
             return ""
 
