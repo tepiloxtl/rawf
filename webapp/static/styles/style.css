@@ -73,7 +73,7 @@ a {
     height: 260px; 
 }
 
-.main-section {
+/* .main-section {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
@@ -82,7 +82,7 @@ a {
 .main-section .side-by-side {
     flex: 1 1 calc(50% - 1rem);
     min-width: 300px;
-}
+} */
 
 .table-hover {
     --bs-table-hover-color: #ffd700;
