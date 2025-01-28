@@ -55,52 +55,68 @@
 {%- endmacro %}
 
 {% macro widget_hunters(data, cstyles) -%}
-{% for user in data %}
-<tr>
-    <td><img src="/static/img{{ user.UserPic }}" width=24> <a href="/user/{{ user.User}}">{{ user.User }}{% if user.Permissions == 2 %}🔧{% endif %}</a></td>
-    <td>{{ user.GamesMastered }} / {{ user.Games }}</td>
-    <td>{{ user.Achievements }}</td>
-    <td>{{ user.TotalPoints }}</td>
-</tr>
-{% endfor %}
+<div {% if cstyles.class %}class="{% endif %}{{ cstyles.class }}{% if cstyles.class %}" {% endif %}{% if cstyles.style %}style="{% endif %}{{ cstyles.style }}{% if cstyles.style %}"{% endif %}>
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Games</th>
+                <th>Achievements</th>
+                <th>Points</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in data %}
+            <tr>
+                <td><img src="/static/img{{ user.UserPic }}" width=24> <a href="/user/{{ user.User}}">{{ user.User }}{% if user.Permissions == 2 %}🔧{% endif %}</a></td>
+                <td>{{ user.GamesMastered }} / {{ user.Games }}</td>
+                <td>{{ user.Achievements }}</td>
+                <td>{{ user.TotalPoints }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {%- endmacro %}
 
 {% macro widget_feed(data, cstyles) -%}
-{% for achievement in data %}
-{% if achievement.Type == "achievement" %}
-<li class="list-group-item achievement">
-    <div style="vertical-align: top; display: inline-block; ">
-        <img src="/static/img{{ achievement.Icon1 }}">
-        <img src="/static/img/Badge/{{ achievement.Icon2 }}.png">
-    </div>
-    <div style="display: inline-block; width: calc(100% - 140px) ">
-        <div style="display: inline-block; width: calc(100% - 10em)">
-            <a href="/user/{{ achievement.User}}">{{ achievement.User }}</a> unlocked {{ achievement.aTitle }} in <a href="/game/{{ achievement.ID }}?u={{ achievement.User }}">{{ achievement.gTitle }}</a> 
+<div {% if cstyles.class %}class="{% endif %}{{ cstyles.class }}{% if cstyles.class %}" {% endif %}{% if cstyles.style %}style="{% endif %}{{ cstyles.style }}{% if cstyles.style %}"{% endif %}>
+    {% for achievement in data %}
+    {% if achievement.Type == "achievement" %}
+    <li class="list-group-item achievement">
+        <div style="vertical-align: top; display: inline-block; ">
+            <img src="/static/img{{ achievement.Icon1 }}">
+            <img src="/static/img/Badge/{{ achievement.Icon2 }}.png">
         </div>
-        <div style="display: inline-block; position:absolute; right:0;">{{achievement.DateEarned}}</div>
-        <div>
-            {{ achievement.Description }}
+        <div style="display: inline-block; width: calc(100% - 140px) ">
+            <div style="display: inline-block; width: calc(100% - 10em)">
+                <a href="/user/{{ achievement.User}}">{{ achievement.User }}</a> unlocked {{ achievement.aTitle }} in <a href="/game/{{ achievement.ID }}?u={{ achievement.User }}">{{ achievement.gTitle }}</a> 
+            </div>
+            <div style="display: inline-block; position:absolute; right:0;">{{achievement.DateEarned}}</div>
+            <div>
+                {{ achievement.Description }}
+            </div>
         </div>
-    </div>
-</li>
-{% elif achievement.Type == "leaderboard" %}
-<li class="list-group-item achievement">
-    <div style="vertical-align: top; display: inline-block; ">
-        <img src="/static/img{{ achievement.Icon1 }}">
-        <img src="/static/img{{ achievement.Icon2 }}">
-    </div>
-    <div style="display: inline-block; width: calc(100% - 140px) ">
-        <div style="display: inline-block; width: calc(100% - 10em)">
-            <a href="/user/{{ achievement.User}}">{{ achievement.User }}</a> scored a new personal best in {{ achievement.aTitle }} in <a href="/game/{{ achievement.ID }}?u={{ achievement.User }}">{{ achievement.gTitle }}</a> 
+    </li>
+    {% elif achievement.Type == "leaderboard" %}
+    <li class="list-group-item achievement">
+        <div style="vertical-align: top; display: inline-block; ">
+            <img src="/static/img{{ achievement.Icon1 }}">
+            <img src="/static/img{{ achievement.Icon2 }}">
         </div>
-        <div style="display: inline-block; position:absolute; right:0;">{{achievement.DateEarned}}</div>
-        <div>
-            Score: {{ achievement.FormattedScore }}<br>
-            Global rank: {{ achievement.Rank }} | Local rank: {{ achievement.LocalRank }}<br>
-            {{ achievement.Description }}
+        <div style="display: inline-block; width: calc(100% - 140px) ">
+            <div style="display: inline-block; width: calc(100% - 10em)">
+                <a href="/user/{{ achievement.User}}">{{ achievement.User }}</a> scored a new personal best in {{ achievement.aTitle }} in <a href="/game/{{ achievement.ID }}?u={{ achievement.User }}">{{ achievement.gTitle }}</a> 
+            </div>
+            <div style="display: inline-block; position:absolute; right:0;">{{achievement.DateEarned}}</div>
+            <div>
+                Score: {{ achievement.FormattedScore }}<br>
+                Global rank: {{ achievement.Rank }} | Local rank: {{ achievement.LocalRank }}<br>
+                {{ achievement.Description }}
+            </div>
         </div>
-    </div>
-</li>
-{% endif %}
-{% endfor %}
+    </li>
+    {% endif %}
+    {% endfor %}
+</ul>
 {%- endmacro %}

@@ -77,7 +77,7 @@ def get_set_requests():
     setrequestsdone = sorted(setrequestsdone.values(), key=lambda item: (-len(item.get("Users", [])), item.get("Title", "").startswith("<span"), item.get("Title", "")))
     return setrequestsdone
 
-def get_leaderboards(username = None):
+def get_user_leaderboards(username = None):
     query = "SELECT ulb.GameID, ulb.FormattedScore, ulb.Rank, ulb.DateUpdated, g.Title, lb.Title, lb.Description, lb.RankAsc, lb.Format, u.User FROM userleaderboards ulb INNER JOIN users u ON ulb.UserID = u.ID LEFT JOIN leaderboards lb ON ulb.EntryID = lb.ID LEFT JOIN games g on lb.GameID = g.ID"
     args = []
     if username != None:
@@ -229,14 +229,15 @@ FROM
 @app.route('/index')
 def index():
     sqlusers = query_db('select * from users ORDER BY TotalPoints DESC')
-    achievements = activity_feed("achievements")
+    achievements = activity_feed("combined")
     wtpg = get_want_to_play_games()
     pg = pointsgraph()
     mastered = get_mastered_games()
     srq = get_set_requests()
     cstyles = {"widget_table": {"class": "scrollable-table table-260 border rounded"},
+               "widget_hunters": {"class": "scrollable-table table-300 border rounded"},
+               "widget_feed": {"class": "list-group list-group-flush scrollable-list border rounded"},
                "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:260px; width:100%;"}}
-    # pprint.pprint(get_leaderboards(), indent=4)
     return render_template('index.html.j2', Title='Home', users=sqlusers, achievements=achievements, wtpg=wtpg, pointsgraph=pg, mastered=mastered, srq=srq, cstyles=cstyles)
 
 @app.route('/user/<username>')
@@ -245,7 +246,7 @@ def userpage(username):
     usergames = query_db("SELECT g.ID, g.Title, g.ConsoleName, g.ConsoleID, g.ImageIcon, g.NumAchievements, ug.NumAwardedHardcore FROM usergames ug INNER JOIN games g ON g.ID = ug.GameID WHERE UserID = ? ORDER BY MostRecentAwardedDate DESC;", args = [str(user["ID"])])
     wtpg = get_want_to_play_games(username)
     pg = pointsgraph(username)
-    lb = get_leaderboards(username)
+    lb = get_user_leaderboards(username)
     cstyles = {"widget_table": {"class": "scrollable-table table-260 border rounded"},
                "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:260px; width:100%;"}}
     for game in usergames:
