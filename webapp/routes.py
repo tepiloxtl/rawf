@@ -87,6 +87,17 @@ def get_user_leaderboards(username = None):
     leaderboards = query_db(query, args)
     return leaderboards
 
+def get_latest_masteries(username = None):
+    query = "SELECT ug.UserID, ug.GameID, ug.HighestAwardKind, ug.HighestAwardDate, u.User, u.UserPic, g.Title, g.ImageIcon FROM usergames ug INNER JOIN users u ON ug.UserID = u.ID LEFT JOIN games g ON ug.GameID = g.ID WHERE ug.HighestAwardKind = 'mastered'"
+    args = []
+    if username != None:
+        query += " AND u.User = ?"
+        args.append(username)
+    query += " ORDER BY ug.HighestAwardDate DESC"
+    masteries = query_db(query, args)
+    for item in masteries:
+        item["Users"] = [item["User"]]
+    return masteries
 
 def pointsgraph(username = None):
     now = datetime.datetime.now()
@@ -248,11 +259,12 @@ def index():
     pg = pointsgraph()
     mastered = get_mastered_games()
     srq = get_set_requests()
+    masteries = get_latest_masteries()
     cstyles = {"widget_table": {"class": "scrollable-table table-260 border rounded"},
                "widget_hunters": {"class": "scrollable-table table-300 border rounded"},
                "widget_feed": {"class": "list-group list-group-flush scrollable-list border rounded"},
                "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:260px; width:100%;"}}
-    return render_template('index.html.j2', Title='Home', users=sqlusers, achievements=achievements, wtpg=wtpg, pointsgraph=pg, mastered=mastered, srq=srq, cstyles=cstyles)
+    return render_template('index.html.j2', Title='Home', users=sqlusers, achievements=achievements, wtpg=wtpg, pointsgraph=pg, mastered=mastered, srq=srq, masteries=masteries, cstyles=cstyles)
 
 @app.route('/user/<username>')
 def userpage(username):

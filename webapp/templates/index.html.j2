@@ -40,9 +40,9 @@
         <div style="text-align:center; margin-top: 1.5rem"><a href="/games" class="btn btn-primary" role="button">Games</a></div>
         <!-- Section 2: Grid of Elements -->
         <div class="row row-cols-1 row-cols-md-3">
-            <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Groups Wants to Play list</b></div><div><a onclick="window.open('widget/wtpg', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div></div>
+            <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Recent Masteries</b></div><div><a onclick="window.open('widget/srq', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div></div>
                 <div>
-                    {{ widgets.widget_list_gamebyuser(wtpg, cstyles.widget_table) }}
+                    {{ widgets.widget_list_gamebyuser(masteries, cstyles.widget_table) }}
                 </div>
             </div>
             <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Weekly points graph</b></div><div><a onclick="window.open('widget/weeklypoints', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div></div>
@@ -50,18 +50,20 @@
                     {{ widgets.widget_pointsgraph(pointsgraph, cstyles.widget_graph) }}
                 </div>
             </div>
-            <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Mastered games</b></div><div><a onclick="window.open('widget/mastered', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div></div>
+            <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Most mastered games</b></div><div><a onclick="window.open('widget/mastered', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div></div>
                 <div>
                     {{ widgets.widget_list_gamebyuser(mastered, cstyles.widget_table) }}
+                </div>
+            </div>
+            <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Groups Wants to Play list</b></div><div><a onclick="window.open('widget/wtpg', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div></div>
+                <div>
+                    {{ widgets.widget_list_gamebyuser(wtpg, cstyles.widget_table) }}
                 </div>
             </div>
             <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Set requests</b></div><div><a onclick="window.open('widget/srq', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div></div>
                 <div>
                     {{ widgets.widget_list_gamebyuser(srq, cstyles.widget_table) }}
                 </div>
-            </div>
-            <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Element 1</b></div><div><a onclick="window.open('widget/wtpg', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div></div>
-                <div></div>
             </div>
             <div class="col"><div style="display: flex; justify-content: space-between; align-items: center;"><div><b>Element 1</b></div><div><a onclick="window.open('widget/wtpg', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div></div>
                 <div></div>
