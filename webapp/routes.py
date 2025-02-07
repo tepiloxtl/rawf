@@ -335,6 +335,9 @@ def popupwidget(widget):
         case "srq":
             data = get_set_requests()
             swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data, cstyles.widget_table) }}"
+        case "masteries":
+            data = get_latest_masteries()
+            swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data, cstyles.widget_table) }}"
     return render_template('popup.html.j2', widget=render_template_string(swidget, data=data, cstyles=cstyles))
 # weeklypoints
 # mastered
