@@ -97,6 +97,7 @@ def get_latest_masteries(username = None):
     masteries = query_db(query, args)
     for item in masteries:
         item["Users"] = [item["User"]]
+        item["Title"] = titlebadges(item["Title"])
     return masteries
 
 def pointsgraph(username = None):
