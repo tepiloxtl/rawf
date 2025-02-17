@@ -26,9 +26,9 @@
                     <div><h2>Activity feed</h2></div>
                     <div>
                         <div class="btn-group" id="update-js" role="group">
-                            <button type="button" class="btn btn-primary" payload="feed-achievements">Achievements</button>
-                            <button type="button" class="btn btn-primary" payload="feed-combined">Both</button>
-                            <button type="button" class="btn btn-primary" payload="feed-leaderboards">Leaderboards</button>
+                            <button type="button" class="btn btn-primary" payload="feed-achievements" payloaddata="{{ user.User }}">Achievements</button>
+                            <button type="button" class="btn btn-primary" payload="feed-combined" payloaddata="{{ user.User }}">Both</button>
+                            <button type="button" class="btn btn-primary" payload="feed-leaderboards" payloaddata="{{ user.User }}">Leaderboards</button>
                         </div>
                     </div>
                 </div>

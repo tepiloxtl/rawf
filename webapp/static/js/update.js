@@ -26,6 +26,14 @@ specificDivs.forEach(div => {
         const targetElementId = responseMapping[payload];
         if (!targetElementId) return; // Exit if no target element is associated with this payload
 
+        // Check if the button has a `payloaddata` attribute
+        const payloadData = button.getAttribute('payloaddata');
+
+        const postData = {
+            type: payload,
+            data: payloadData || "" // Send empty string if payloaddata is not set
+        };
+
         // TODO: Deal with it after we make Bootstrap theme
         // // Remove the active class from all buttons in this specific div
         // const allButtons = div.querySelectorAll('.btn');
@@ -40,7 +48,7 @@ specificDivs.forEach(div => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ type: payload }) // POST data includes the "payload"
+            body: JSON.stringify(postData) // POST data includes the "payload" and optionally "payloaddata"
         })
         .then(response => {
             if (!response.ok) {

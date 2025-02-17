@@ -349,8 +349,12 @@ def popupwidget(widget):
 def update_page():
     cstyles = {"widget_hunters": {"class": "scrollable-table table-300 border rounded"},
             "widget_feed": {"class": "list-group list-group-flush scrollable-list border rounded"}}
-    type = request.get_json()
-    type = type["type"]
+    postdata = request.get_json()
+    print(postdata)
+    type = postdata["type"]
+    data = postdata["data"]
+    if data == '':
+        data = None
     match type:
         case "hunters-all":
             sqlusers = query_db('select * from users ORDER BY TotalPoints DESC')
@@ -422,13 +426,13 @@ GROUP BY
 ORDER BY TotalPoints DESC;""")
             return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(data, cstyles.widget_hunters) }}", data = sqlusers, cstyles=cstyles)
         case "feed-achievements":
-            feed = activity_feed("achievements")
+            feed = activity_feed("achievements", data)
             return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(data, cstyles.widget_feed) }}", data = feed, cstyles=cstyles)
         case "feed-leaderboards":
-            feed = activity_feed("leaderboards")
+            feed = activity_feed("leaderboards", data)
             return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(data, cstyles.widget_feed) }}", data = feed, cstyles=cstyles)
         case "feed-combined":
-            feed = achievements = activity_feed("combined")
+            feed = activity_feed("combined", data)
             return render_template_string("{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(data, cstyles.widget_feed) }}", data = feed, cstyles=cstyles)
         case _:
             return ""
