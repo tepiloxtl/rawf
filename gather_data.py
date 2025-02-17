@@ -248,6 +248,7 @@ def update_user(username):
         get_user_set_requests(username)
         get_user_leaderboards(username, updategames)
         if int(time.time()) - user[2] > 24 * 60 * 60:
+            print("Fetching new UserPic for " + str(RAUserProfile("User")))
             get_image(str(RAUserProfile["UserPic"]).split("/")[1], str(RAUserProfile["UserPic"]).split("/")[2], force=True)
             c.execute("UPDATE users SET UserPicLastUpdate = ? WHERE ID = ?;",
                       [int(time.time()),
