@@ -68,10 +68,11 @@ def add_new_user(username):
     # ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, 
     # ContribYield INTEGER, TotalPoints INTEGER, TotalSoftcorePoints INTEGER, TotalTruePoints INTEGER, Games INTEGER, GamesMastered INTEGER, Achievements INTEGER,
     # Permissions INTEGER, Untracked INTEGER, UserWallActive INTEGER, Motto TEXT
-    c.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+    c.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
                 [int(RAUserProfile["ID"]),
                 str(RAUserProfile["User"]),
                 str(RAUserProfile["UserPic"]), 
+                int(time.time()),
                 int(time.mktime(datetime.datetime.strptime(RAUserProfile["MemberSince"], "%Y-%m-%d %H:%M:%S").timetuple())), 
                 str(RAUserProfile["RichPresenceMsg"]), 
                 int(RAUserProfile["LastGameID"]), 
@@ -158,7 +159,7 @@ def update_user(username):
     print("Fetching updates for " + str(username))
     updategames = {}
     c = conn.cursor()
-    user = c.execute("SELECT ID, LastUpdate from users WHERE User = '" + str(username) + "'").fetchone()
+    user = c.execute("SELECT ID, LastUpdate, UserPicLastUpdate from users WHERE User = '" + str(username) + "'").fetchone()
     userid = user[0]
     userlastupdate = user[1]
     userlastha = [aa for aa in c.execute("SELECT DateEarnedHardcore from userachievements WHERE UserID = '" + str(userid) + "' ORDER BY DateEarnedHardcore DESC LIMIT 1").fetchone()]
@@ -246,6 +247,11 @@ def update_user(username):
         get_user_wants_to_play(username)
         get_user_set_requests(username)
         get_user_leaderboards(username, updategames)
+        if int(time.time()) - user[2] > 24 * 60 * 60:
+            get_image(str(RAUserProfile["UserPic"]).split("/")[1], str(RAUserProfile["UserPic"]).split("/")[2], force=True)
+            c.execute("UPDATE users SET UserPicLastUpdate = ? WHERE ID = ?;",
+                      [int(time.time()),
+                       int(userid)])
     conn.commit()
 
 def get_user_wants_to_play(username):
@@ -330,9 +336,9 @@ def get_user_leaderboards(username, gamelist = {}):
                             int(time.mktime(datetime.datetime.strptime(entry["UserEntry"]["DateUpdated"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple()))])
     conn.commit()
 
-def get_image(type, id):
+def get_image(type, id, force = False):
     if type == "Badge":
-        if os.path.isfile("webapp/static/img/Badge/" + str(id) + ".png") == False:
+        if os.path.isfile("webapp/static/img/Badge/" + str(id) + ".png") == False or force == True:
             img = requests_free.get("https://media.retroachievements.org/Badge/" + str(id) + ".png", stream=True)
             with open("webapp/static/img/Badge/" + str(id) + ".png", "wb") as f:
                 for chunk in img:
@@ -343,7 +349,7 @@ def get_image(type, id):
                     f.write(chunk)
             pass
     else:
-        if os.path.isfile("webapp/static/img/" + str(type) + "/" + str(id)) == False:
+        if os.path.isfile("webapp/static/img/" + str(type) + "/" + str(id)) == False or force == True:
             img = requests_free.get("https://media.retroachievements.org/" + str(type) + "/" + str(id), stream=True)
             with open("webapp/static/img/" + str(type) + "/" + str(id), "wb") as f:
                 for chunk in img:
@@ -379,7 +385,7 @@ if os.path.isfile(config["RAWF_DBFILE"]) == False:
     conn = sqlite3.connect("RA.db")
     c = conn.cursor()
 
-    c.execute("CREATE TABLE users (ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, ContribYield INTEGER, TotalPoints INTEGER, TotalSoftcorePoints INTEGER, TotalTruePoints INTEGER, Games INTEGER, GamesMastered INTEGER, Achievements INTEGER, Permissions INTEGER, Untracked INTEGER, UserWallActive INTEGER, Motto TEXT, LastUpdate INTEGER);")
+    c.execute("CREATE TABLE users (ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, UserPicLastUpdate INTEGER, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, ContribYield INTEGER, TotalPoints INTEGER, TotalSoftcorePoints INTEGER, TotalTruePoints INTEGER, Games INTEGER, GamesMastered INTEGER, Achievements INTEGER, Permissions INTEGER, Untracked INTEGER, UserWallActive INTEGER, Motto TEXT, LastUpdate INTEGER);")
     c.execute("CREATE TABLE games (ID INTEGER PRIMARY KEY NOT NULL, Title TEXT, ConsoleID INTEGER, ConsoleName TEXT, ForumTopicID INTEGER, Flags INTEGER, ImageIcon TEXT, ImageTitle TEXT, ImageIngame TEXT, ImageBoxArt TEXT, Publisher TEXT, Developer TEXT, Genre TEXT, Released TEXT, ReleasedAtGranularity TEXT, GuideURL TEXT, Updated INTEGER, ParentGameID INTEGER, NumAchievements INTEGER);")
     c.execute("CREATE TABLE usergames (UserID INTEGER, GameID INTEGER, NumAwarded INTEGER, NumAwardedHardcore INTEGER, MostRecentAwardedDate INTEGER, HighestAwardKind TEXT, HighestAwardDate INTEGER)")
     c.execute("CREATE TABLE achievements (GameID INTEGER, ID INTEGER, Title TEXT, Description TEXT, Points INTEGER, TrueRatio REAL, Author TEXT, DateModified INTEGER, DateCreated INTEGER, BadgeName INTEGER, DisplayOrder INTEGER, type TEXT);")
