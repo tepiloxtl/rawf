@@ -35,7 +35,7 @@ def titlebadges(title):
     return safereplace(title, [["~Prototype~", '<span class="badge bg-primary">Prototype</span>'], ["~Hack~", '<span class="badge bg-primary">Hack</span>'], ["~Demo~", '<span class="badge bg-primary">Demo</span>'], ["~Homebrew~", '<span class="badge bg-primary">Homebrew</span>']])
 
 def get_want_to_play_games(username = None):
-    query = "SELECT uw.GameID, uw.GameTitle, uw.ConsoleID, uw.ImageIcon, u.User, g.ID FROM userwantstoplay uw INNER JOIN users u ON uw.UserID = u.ID LEFT JOIN games g on uw.GameID = g.ID"
+    query = "SELECT uw.GameID, uw.GameTitle, uw.ConsoleID, uw.ImageIcon, u.User, u.UserPic, g.ID FROM userwantstoplay uw INNER JOIN users u ON uw.UserID = u.ID LEFT JOIN games g on uw.GameID = g.ID"
     args = []
     if username != None:
         query += " WHERE u.User = ?"
@@ -46,34 +46,34 @@ def get_want_to_play_games(username = None):
     wtpgdone = {}
     for item in wtpg:
         if item["GameID"] in wtpgdone:
-            wtpgdone[item["GameID"]]["Users"].append(item["User"])
+            wtpgdone[item["GameID"]]["Users"].append({"Name": item["User"], "UserPic": item["UserPic"]})
         else:
-            wtpgdone[item["GameID"]] = {"ID": item["ID"], "Title": titlebadges(item["GameTitle"]) , "ConsoleID": item["ConsoleID"], "ImageIcon": item["ImageIcon"], "Users": [item["User"]]}
+            wtpgdone[item["GameID"]] = {"ID": item["ID"], "Title": titlebadges(item["GameTitle"]) , "ConsoleID": item["ConsoleID"], "ImageIcon": item["ImageIcon"], "Users": [{"Name": item["User"], "UserPic": item["UserPic"]}]}
     wtpgdone = sorted(wtpgdone.values(), key=lambda item: (-len(item.get("Users", [])), item.get("Title", "").startswith("<span"), item.get("Title", "")))
     return wtpgdone
 
 def get_mastered_games():
     #mastered = query_db("SELECT g.ID, g.Title, g.ImageIcon, u.User FROM games g INNER JOIN users u ON uw.UserID = u.ID LEFT JOIN games g on uw.GameID = g.ID;")
-    mastered = query_db("SELECT g.Title, g.ID, g.ImageIcon, u.User FROM usergames ug INNER JOIN users u ON ug.UserID = u.ID LEFT JOIN games g ON ug.GameID = g.ID WHERE HighestAwardKind = 'mastered';")
+    mastered = query_db("SELECT g.Title, g.ID, g.ImageIcon, u.User, u.userPic FROM usergames ug INNER JOIN users u ON ug.UserID = u.ID LEFT JOIN games g ON ug.GameID = g.ID WHERE HighestAwardKind = 'mastered';")
     mastereddone = {}
     for item in mastered:
         if item["ID"] in mastereddone:
-            mastereddone[item["ID"]]["Users"].append(item["User"])
+            mastereddone[item["ID"]]["Users"].append({"Name": item["User"], "UserPic": item["UserPic"]})
         else:
-            mastereddone[item["ID"]] = {"ID": item["ID"], "Title": titlebadges(item["Title"]), "ImageIcon": item["ImageIcon"], "Users": [item["User"]]}
+            mastereddone[item["ID"]] = {"ID": item["ID"], "Title": titlebadges(item["Title"]), "ImageIcon": item["ImageIcon"], "Users": [{"Name": item["User"], "UserPic": item["UserPic"]}]}
     mastereddone = sorted(mastereddone.values(), key=lambda item: (-len(item.get("Users", [])), item.get("Title", "").startswith("<span"), item.get("Title", "")))
     return mastereddone
 
 def get_set_requests():
     #UserID INTEGER, GameID INTEGER, GameTitle TEXT, ConsoleID INTEGER, ImageIcon TEXT
-    setrequests = query_db("SELECT sr.GameID, sr.GameTitle, sr.ConsoleID, sr.ImageIcon, u.User, g.ID FROM setrequests sr INNER JOIN users u ON sr.UserID = u.ID LEFT JOIN games g on sr.GameID = g.ID;")
+    setrequests = query_db("SELECT sr.GameID, sr.GameTitle, sr.ConsoleID, sr.ImageIcon, u.User, u.UserPic, g.ID FROM setrequests sr INNER JOIN users u ON sr.UserID = u.ID LEFT JOIN games g on sr.GameID = g.ID;")
     #pprint.pprint(wtpg, indent=4)
     setrequestsdone = {}
     for item in setrequests:
         if item["GameID"] in setrequestsdone:
-            setrequestsdone[item["GameID"]]["Users"].append(item["User"])
+            setrequestsdone[item["GameID"]]["Users"].append({"Name": item["User"], "UserPic": item["UserPic"]})
         else:
-            setrequestsdone[item["GameID"]] = {"ID": item["ID"], "Title": titlebadges(item["GameTitle"]) , "ConsoleID": item["ConsoleID"], "ImageIcon": item["ImageIcon"], "Users": [item["User"]]}
+            setrequestsdone[item["GameID"]] = {"ID": item["ID"], "Title": titlebadges(item["GameTitle"]) , "ConsoleID": item["ConsoleID"], "ImageIcon": item["ImageIcon"], "Users": [{"Name": item["User"], "UserPic": item["UserPic"]}]}
     setrequestsdone = sorted(setrequestsdone.values(), key=lambda item: (-len(item.get("Users", [])), item.get("Title", "").startswith("<span"), item.get("Title", "")))
     return setrequestsdone
 
@@ -96,7 +96,7 @@ def get_latest_masteries(username = None):
     query += " ORDER BY ug.HighestAwardDate DESC"
     masteries = query_db(query, args)
     for item in masteries:
-        item["Users"] = [item["User"]]
+        item["Users"] = [{"Name": item["User"], "UserPic": item["UserPic"]}]
         item["Title"] = titlebadges(item["Title"])
     return masteries
 
@@ -273,6 +273,10 @@ def userpage(username):
     usergames = query_db("SELECT g.ID, g.Title, g.ConsoleName, g.ConsoleID, g.ImageIcon, g.NumAchievements, ug.NumAwardedHardcore FROM usergames ug INNER JOIN games g ON g.ID = ug.GameID WHERE UserID = ? ORDER BY MostRecentAwardedDate DESC;", args = [str(user["ID"])])
     lb = get_user_leaderboards(username)
     for game in usergames:
+        #TODO: Passing for now, fix pls
+        if game["NumAchievements"] == 0:
+            continue
+        print(game["Title"])
         game["NumHardcoreUnlocksp"] = int((len(query_db("SELECT AchievementID FROM userachievements WHERE UserID = ? AND GameID = ?", args=[int(user["ID"]), int(game["ID"])])) / int(game["NumAchievements"])) * 100)
         game["Title"] = titlebadges(game["Title"])
         game["HasLeaderboards"] = any(item["GameID"] == int(game["ID"]) for item in lb)

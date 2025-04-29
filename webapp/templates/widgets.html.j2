@@ -11,7 +11,7 @@
             <td>
                 <div style="float: right;">
                 {% for user in game.Users %} 
-                    <a href="/user/{{user}}"><img src="/static/img/UserPic/{{user}}.png" width=24></a> 
+                    <a href="/user/{{user.Name}}"><img src="/static/img{{user.UserPic}}" width=24></a> 
                 {% endfor %}
                 </div>
             </td>

@@ -1,33 +1,54 @@
 import sqlite3, requests_ratelimiter, pprint, datetime, time, schedule, os, dotenv # type: ignore
+# from requests.exceptions import ConnectionError
 
 def RARequest(endpoint, **kwargs):
-    sreq = ""
-    for item in kwargs:
-        sreq = sreq + str(item) + "=" + str(kwargs[item]) + "&"
-    sreq = sreq + "y=" + str(config["RA_APIKEY"])
-    # Paginated response with proper counter/total count
-    if endpoint in ["GetUserCompletionProgress", "GetUserWantToPlayList", "GetUsersIFollow", "GetUsersFollowingMe", "GetGameLeaderboards", "GetLeaderboardEntries", "GetUserGameLeaderboards", "GetComments", "GetRecentGameAwards"]:
-        apiresponse = requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq)).json()
-        # API_GetUserWantToPlayList returns [] for users with no wants, which I find kind of weird? Investigate that later?
-        if "Results" not in apiresponse:
-            return []
-        response = {"Total": apiresponse["Total"], "Results": []}
-        more_entries = True
-        o = 0
-        count = apiresponse["Count"]
-        while more_entries == True:
-            if apiresponse["Results"] == []:
-                more_entries = False
-                continue
-            for item in apiresponse["Results"]:
-                response["Results"].append(item)
-            o = o + count
-            apiresponse = requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq) + "&o=" + str(o)).json()
-        return response
-    # Paginated response with legacy responses: GetUserRecentlyPlayedGames, GetGameList, GetAchievementUnlocks, GetTicketData
-    # Non-paginated response
-    else:
-        return requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq)).json()
+    global requests
+    max_retries = 6
+    retry_delay = 10
+    attempt = 0
+
+    while attempt < max_retries:
+        try:
+            sreq = ""
+            for item in kwargs:
+                sreq = sreq + str(item) + "=" + str(kwargs[item]) + "&"
+            sreq = sreq + "y=" + str(config["RA_APIKEY"])
+            # Paginated response with proper counter/total count
+            if endpoint in ["GetUserCompletionProgress", "GetUserWantToPlayList", "GetUsersIFollow", "GetUsersFollowingMe", "GetGameLeaderboards", "GetLeaderboardEntries", "GetUserGameLeaderboards", "GetComments", "GetRecentGameAwards"]:
+                apiresponse = requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq)).json()
+                # API_GetUserWantToPlayList returns [] for users with no wants, which I find kind of weird? Investigate that later?
+                if "Results" not in apiresponse:
+                    return []
+                response = {"Total": apiresponse["Total"], "Results": []}
+                more_entries = True
+                o = 0
+                count = apiresponse["Count"]
+                while more_entries == True:
+                    if apiresponse["Results"] == []:
+                        more_entries = False
+                        continue
+                    for item in apiresponse["Results"]:
+                        response["Results"].append(item)
+                    o = o + count
+                    apiresponse = requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq) + "&o=" + str(o)).json()
+                return response
+            # Paginated response with legacy responses: GetUserRecentlyPlayedGames, GetGameList, GetAchievementUnlocks, GetTicketData
+            # Non-paginated response
+            else:
+                return requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq)).json()
+        except ConnectionError: #this binch
+            attempt += 1
+            if attempt >= max_retries:
+                raise
+            print("Connection aborted, {}/{} retries, waiting {}s".format(str(attempt), str(max_retries), str(retry_delay)))
+            requests.close()
+            time.sleep(retry_delay)
+            requests = requests_ratelimiter.LimiterSession(per_second=1)
+            requests.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
+            
+            continue
+        except Exception as e: #other exceptions
+            raise
 
 def add_new_user(username):
     c = conn.cursor()
@@ -370,6 +391,7 @@ def update():
     conn.commit()
     print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ": update users finished")
 
+global requests
 requests = requests_ratelimiter.LimiterSession(per_second=1)
 requests.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
 requests_free = requests_ratelimiter.LimiterSession(per_second=500)
