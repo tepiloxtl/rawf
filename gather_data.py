@@ -1,5 +1,4 @@
-import sqlite3, requests_ratelimiter, pprint, datetime, time, schedule, os, dotenv # type: ignore
-# from requests.exceptions import ConnectionError
+import sqlite3, requests_ratelimiter, pprint, datetime, time, schedule, os, dotenv, http.client # type: ignore
 
 def RARequest(endpoint, **kwargs):
     global requests
@@ -36,7 +35,7 @@ def RARequest(endpoint, **kwargs):
             # Non-paginated response
             else:
                 return requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq)).json()
-        except ConnectionError: #this binch
+        except http.client.RemoteDisconnected: #this binch
             attempt += 1
             if attempt >= max_retries:
                 raise

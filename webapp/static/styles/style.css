@@ -55,7 +55,6 @@ a {
 }
 
 .scrollable-list {
-    max-height: 300px; /* Adjust height as needed */
     overflow-y: auto;
 }
 
@@ -65,11 +64,11 @@ a {
     overflow-y: auto;
 }
 
-.table-300 {
+.height-300 {
     height: 300px; 
 }
 
-.table-260 {
+.height-260 {
     height: 260px; 
 }
 

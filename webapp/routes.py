@@ -261,9 +261,9 @@ def index():
     mastered = get_mastered_games()
     srq = get_set_requests()
     masteries = get_latest_masteries()
-    cstyles = {"widget_table": {"class": "scrollable-table table-260 border rounded"},
-               "widget_hunters": {"class": "scrollable-table table-300 border rounded"},
-               "widget_feed": {"class": "list-group list-group-flush scrollable-list border rounded"},
+    cstyles = {"widget_table": {"class": "scrollable-table height-260 border rounded"},
+               "widget_hunters": {"class": "scrollable-table height-300 border rounded"},
+               "widget_feed": {"class": "list-group list-group-flush scrollable-list height-300 border rounded"},
                "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:260px; width:100%;"}}
     return render_template('index.html.j2', Title='Home', users=sqlusers, achievements=achievements, wtpg=wtpg, pointsgraph=pg, mastered=mastered, srq=srq, masteries=masteries, cstyles=cstyles)
 
@@ -282,9 +282,9 @@ def userpage(username):
     wtpg = get_want_to_play_games(username)
     pg = pointsgraph(username)
     feed = activity_feed(type="combined", username=username)
-    cstyles = {"widget_table": {"class": "scrollable-table table-260 border rounded"},
+    cstyles = {"widget_table": {"class": "scrollable-table height-260 border rounded"},
                "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:260px; width:100%;"},
-               "widget_feed": {"class": "list-group list-group-flush scrollable-list border rounded"}}
+               "widget_feed": {"class": "list-group list-group-flush scrollable-list height-300 border rounded"}}
     #pprint.pprint(usergames, indent=4)
     return render_template('user.html.j2', Title=str(username) + ' userpage', user=user, usergames=usergames, wtpg=wtpg, pointsgraph = pg, leaderboards = lb, feed=feed, cstyles = cstyles)
 
@@ -360,8 +360,8 @@ def popupwidget(widget):
 
 @app.route("/api/update", methods=["POST"])
 def update_page():
-    cstyles = {"widget_hunters": {"class": "scrollable-table table-300 border rounded"},
-            "widget_feed": {"class": "list-group list-group-flush scrollable-list border rounded"}}
+    cstyles = {"widget_hunters": {"class": "scrollable-table height-300 border rounded"},
+            "widget_feed": {"class": "list-group list-group-flush scrollable-list height-300 border rounded"}}
     postdata = request.get_json()
     type = postdata["type"]
     data = postdata["data"]
