@@ -276,7 +276,6 @@ def userpage(username):
         #TODO: Passing for now, fix pls
         if game["NumAchievements"] == 0:
             continue
-        print(game["Title"])
         game["NumHardcoreUnlocksp"] = int((len(query_db("SELECT AchievementID FROM userachievements WHERE UserID = ? AND GameID = ?", args=[int(user["ID"]), int(game["ID"])])) / int(game["NumAchievements"])) * 100)
         game["Title"] = titlebadges(game["Title"])
         game["HasLeaderboards"] = any(item["GameID"] == int(game["ID"]) for item in lb)
@@ -292,12 +291,12 @@ def userpage(username):
 @app.route('/games')
 def allgamespage():
     games = {item["ID"]: item for item in query_db("SELECT * FROM games ORDER BY Title")}
-    usergames = query_db("SELECT ug.GameID, u.User from usergames ug JOIN users u ON ug.UserID = u.ID")
+    usergames = query_db("SELECT ug.GameID, u.User, u.UserPic from usergames ug JOIN users u ON ug.UserID = u.ID")
     for item in usergames:
         if "Players" in games[item["GameID"]]:
-            games[item["GameID"]]["Players"].append(item["User"])
+            games[item["GameID"]]["Players"].append({"Name": item["User"], "UserPic": item["UserPic"]})
         else:
-            games[item["GameID"]]["Players"] = [item["User"]]
+            games[item["GameID"]]["Players"] = [{"Name": item["User"], "UserPic": item["UserPic"]}]
     games = games.values()
     for item in games:
         item["Title"] = titlebadges(item["Title"])
@@ -354,7 +353,6 @@ def update_page():
     cstyles = {"widget_hunters": {"class": "scrollable-table table-300 border rounded"},
             "widget_feed": {"class": "list-group list-group-flush scrollable-list border rounded"}}
     postdata = request.get_json()
-    print(postdata)
     type = postdata["type"]
     data = postdata["data"]
     if data == '':
