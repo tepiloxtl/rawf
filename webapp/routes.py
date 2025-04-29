@@ -325,7 +325,9 @@ def gamepage(gameid):
 @app.route('/widget/<widget>')
 def popupwidget(widget):
     cstyles = {"widget_table": {"class": "scrollable-table border rounded"},
-               "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:100%; width:100%;"}}
+               "widget_graph": {"class": "chart-container border rounded", "style": "position: relative; height:100%; width:100%;"},
+               "widget_feed": {"class": "list-group list-group-flush scrollable-list border rounded"},
+}
     match widget:
         case "wtpg":
             data = get_want_to_play_games()
@@ -342,6 +344,14 @@ def popupwidget(widget):
         case "masteries":
             data = get_latest_masteries()
             swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data, cstyles.widget_table) }}"
+        case "hunters":
+            data = query_db('select * from users ORDER BY TotalPoints DESC')
+            swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(data, cstyles.widget_table) }}"
+        case "activity-feed":
+            data = activity_feed("combined")
+            swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(data, cstyles.widget_feed) }}"
+
+
     return render_template('popup.html.j2', widget=render_template_string(swidget, data=data, cstyles=cstyles))
 # weeklypoints
 # mastered
