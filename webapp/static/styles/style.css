@@ -122,7 +122,7 @@ footer {
 }
 
 .ra-btn {
-    position: absolute; /* Position relative to the .gamepage container */
+    /*position:absolute; /* Position relative to the .gamepage container */
     top: 10px; /* Distance from the top of the .gamepage container */
     right: 10px; /* Distance from the right edge of the .gamepage container */
 }

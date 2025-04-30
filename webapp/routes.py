@@ -332,27 +332,34 @@ def popupwidget(widget):
         case "wtpg":
             data = get_want_to_play_games()
             swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data, cstyles.widget_table) }}"
+            updatescript = ""
         case "weeklypoints":
             data = pointsgraph()
             swidget = "{% import 'widgets.html.j2' as widgets %}<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>{{ widgets.widget_pointsgraph(data, cstyles.widget_graph) }}"
+            updatescript = ""
         case "mastered":
             data = get_mastered_games()
             swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data, cstyles.widget_table) }}"
+            updatescript = ""
         case "srq":
             data = get_set_requests()
             swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data, cstyles.widget_table) }}"
+            updatescript = ""
         case "masteries":
             data = get_latest_masteries()
             swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_list_gamebyuser(data, cstyles.widget_table) }}"
+            updatescript = ""
         case "hunters":
             data = query_db('select * from users ORDER BY TotalPoints DESC')
             swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_hunters(data, cstyles.widget_table) }}"
+            updatescript = "<script src='/static/js/update.js'></script><script defer>autoupdate('hunters-all')</script>"
         case "activity-feed":
             data = activity_feed("combined")
             swidget = "{% import 'widgets.html.j2' as widgets %}{{ widgets.widget_feed(data, cstyles.widget_feed) }}"
+            updatescript = "<script src='/static/js/update.js'></script><script defer>autoupdate('feed-combined')</script>"
 
 
-    return render_template('popup.html.j2', widget=render_template_string(swidget, data=data, cstyles=cstyles))
+    return render_template('popup.html.j2', widget=render_template_string(swidget, data=data, cstyles=cstyles), script = updatescript)
 # weeklypoints
 # mastered
 # srq

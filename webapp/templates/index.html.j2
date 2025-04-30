@@ -11,9 +11,9 @@
                     <div><h2 style="display:inline">Hunters</h2><a onclick="window.open('widget/hunters', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div>
                     <div>
                         <div class="btn-group" id="update-js" role="group">
-                            <button type="button" class="btn btn-primary" payload="hunters-week">Week</button>
-                            <button type="button" class="btn btn-primary" payload="hunters-month">Month</button>
-                            <button type="button" class="btn btn-primary" payload="hunters-all">All time</button>
+                            <button type="button" class="btn btn-primary" onclick="autoupdate('hunters-week')">Week</button>
+                            <button type="button" class="btn btn-primary" onclick="autoupdate('hunters-month')">Month</button>
+                            <button type="button" class="btn btn-primary" onclick="autoupdate('hunters-all')">All time</button>
                         </div>
                     </div>
                 </div>
@@ -26,9 +26,9 @@
                     <div><h2 style="display:inline">Activity feed</h2><a onclick="window.open('widget/activity-feed', 'mypopuptitle', 'width=600,height=300')"><i class="bi bi-box-arrow-up-right" style="color:aliceblue; cursor: pointer;"></i></a></div>
                     <div>
                         <div class="btn-group" id="update-js" role="group">
-                            <button type="button" class="btn btn-primary" payload="feed-achievements">Achievements</button>
-                            <button type="button" class="btn btn-primary" payload="feed-combined">Both</button>
-                            <button type="button" class="btn btn-primary" payload="feed-leaderboards">Leaderboards</button>
+                            <button type="button" class="btn btn-primary" onclick="autoupdate('feed-achievements')">Achievements</button>
+                            <button type="button" class="btn btn-primary" onclick="autoupdate('feed-combined')">Both</button>
+                            <button type="button" class="btn btn-primary" onclick="autoupdate('feed-leaderboards')">Leaderboards</button>
                         </div>
                     </div>
                 </div>
@@ -71,4 +71,5 @@
         </div>
     </div>
     <script src="/static/js/update.js"></script>
+    <script defer>autoupdate('hunters-all');autoupdate('feed-combined')</script>
 {% endblock %}

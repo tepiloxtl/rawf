@@ -4,11 +4,13 @@
 {% block content %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <div class="userpage">
-        <div class="ra-btn"><a href="https://retroachievements.org/user/{{ user.User }}" data-umami-event="RA userpage"><img src="/static/img/ra-icon.webp" width=64></a></div>
         <div class="row row-cols-md-1 row-cols-lg-2">
             <div class="col">
-                <div style="vertical-align: top; display: inline-block; ">
-                    <img src="/static/img{{ user.UserPic }}">
+                <div style="display: flex; justify-content: space-between;">
+                    <div style="vertical-align: top; display: inline-block; ">
+                        <img src="/static/img{{ user.UserPic }}">
+                    </div>
+                    <div class="ra-btn"><a href="https://retroachievements.org/user/{{ user.User }}" data-umami-event="RA userpage"><img src="/static/img/ra-icon.webp" width=64></a></div>
                 </div>
                 <div style="display: inline-block;">
                     <h1>{{ user.User }}</h1>
@@ -26,9 +28,9 @@
                     <div><h2>Activity feed</h2></div>
                     <div>
                         <div class="btn-group" id="update-js" role="group">
-                            <button type="button" class="btn btn-primary" payload="feed-achievements" payloaddata="{{ user.User }}">Achievements</button>
-                            <button type="button" class="btn btn-primary" payload="feed-combined" payloaddata="{{ user.User }}">Both</button>
-                            <button type="button" class="btn btn-primary" payload="feed-leaderboards" payloaddata="{{ user.User }}">Leaderboards</button>
+                            <button type="button" class="btn btn-primary" onclick="autoupdate('feed-achievements', '{{ user.User }}')">Achievements</button>
+                            <button type="button" class="btn btn-primary" onclick="autoupdate('feed-combined', '{{ user.User }}')">Both</button>
+                            <button type="button" class="btn btn-primary" onclick="autoupdate('feed-leaderboards', '{{ user.User }}')">Leaderboards</button>
                         </div>
                     </div>
                 </div>
@@ -124,4 +126,5 @@
         </div>
     </div>
     <script src="/static/js/update.js"></script>
+    <script defer>autoupdate('feed-combined', '{{ user.User }}')</script>
 {% endblock %}
