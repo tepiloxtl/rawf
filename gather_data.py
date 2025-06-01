@@ -1,59 +1,12 @@
-import sqlite3, requests_ratelimiter, pprint, datetime, time, schedule, os, dotenv, http.client # type: ignore
-
-def RARequest(endpoint, **kwargs):
-    global requests
-    max_retries = 6
-    retry_delay = 10
-    attempt = 0
-
-    while attempt < max_retries:
-        try:
-            sreq = ""
-            for item in kwargs:
-                sreq = sreq + str(item) + "=" + str(kwargs[item]) + "&"
-            sreq = sreq + "y=" + str(config["RA_APIKEY"])
-            # Paginated response with proper counter/total count
-            if endpoint in ["GetUserCompletionProgress", "GetUserWantToPlayList", "GetUsersIFollow", "GetUsersFollowingMe", "GetGameLeaderboards", "GetLeaderboardEntries", "GetUserGameLeaderboards", "GetComments", "GetRecentGameAwards"]:
-                apiresponse = requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq)).json()
-                # API_GetUserWantToPlayList returns [] for users with no wants, which I find kind of weird? Investigate that later?
-                if "Results" not in apiresponse:
-                    return []
-                response = {"Total": apiresponse["Total"], "Results": []}
-                more_entries = True
-                o = 0
-                count = apiresponse["Count"]
-                while more_entries == True:
-                    if apiresponse["Results"] == []:
-                        more_entries = False
-                        continue
-                    for item in apiresponse["Results"]:
-                        response["Results"].append(item)
-                    o = o + count
-                    apiresponse = requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq) + "&o=" + str(o)).json()
-                return response
-            # Paginated response with legacy responses: GetUserRecentlyPlayedGames, GetGameList, GetAchievementUnlocks, GetTicketData
-            # Non-paginated response
-            else:
-                return requests.get("https://retroachievements.org/API/API_" + str(endpoint) + ".php?" + str(sreq)).json()
-        except http.client.RemoteDisconnected: #this binch
-            attempt += 1
-            if attempt >= max_retries:
-                raise
-            print("Connection aborted, {}/{} retries, waiting {}s".format(str(attempt), str(max_retries), str(retry_delay)))
-            requests.close()
-            time.sleep(retry_delay)
-            requests = requests_ratelimiter.LimiterSession(per_second=1)
-            requests.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
-            
-            continue
-        except Exception as e: #other exceptions
-            raise
+import sqlite3, requests_ratelimiter, pprint, datetime, time, schedule, os, dotenv, http.client, json # type: ignore
+from requests.exceptions import ConnectionError
+from RARequest import RARequest
 
 def add_new_user(username):
     c = conn.cursor()
     print("Adding new user " + str(username) + " to database")
-    RAUserProfile = RARequest("GetUserProfile", u = str(username))
-    RAUserGames = RARequest("GetUserCompletionProgress", u = str(username))
+    RAUserProfile = RARequest.get("GetUserProfile", u = str(username))
+    RAUserGames = RARequest.get("GetUserCompletionProgress", u = str(username))
     known_games = [game[0] for game in c.execute("SELECT ID FROM games").fetchall()]
     mastered_games = 0
     achievement_count = 0
@@ -72,7 +25,7 @@ def add_new_user(username):
                     int(time.mktime(datetime.datetime.strptime(game["MostRecentAwardedDate"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple()) if game["MostRecentAwardedDate"] != None else 0), 
                     str(game["HighestAwardKind"]), 
                     int(time.mktime(datetime.datetime.strptime(game["HighestAwardDate"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple()) if game["HighestAwardDate"] != None else 0)])
-        RAProgress = RARequest("GetGameInfoAndUserProgress", u = str(username), g = str(game["GameID"]))
+        RAProgress = RARequest.get("GetGameInfoAndUserProgress", u = str(username), g = str(game["GameID"]))
         for achievement in RAProgress["Achievements"].values():
             if "DateEarnedHardcore" in achievement or "DateEarned" in achievement:
                 achievement_count += 1
@@ -117,8 +70,8 @@ def add_new_user(username):
 
 def add_new_game(gameid):
     print("Querying game " + str(gameid))
-    RAGame = RARequest("GetGameExtended", i = str(gameid))
-    RAGamelb = RARequest("GetGameLeaderboards", i = str(gameid))
+    RAGame = RARequest.get("GetGameExtended", i = str(gameid))
+    RAGamelb = RARequest.get("GetGameLeaderboards", i = str(gameid))
     get_image(str(RAGame["ImageIcon"]).split("/")[1], str(RAGame["ImageIcon"]).split("/")[2])
     get_image(str(RAGame["ImageTitle"]).split("/")[1], str(RAGame["ImageTitle"]).split("/")[2])
     get_image(str(RAGame["ImageIngame"]).split("/")[1], str(RAGame["ImageIngame"]).split("/")[2])
@@ -185,7 +138,7 @@ def update_user(username):
     userlastha = [aa for aa in c.execute("SELECT DateEarnedHardcore from userachievements WHERE UserID = '" + str(userid) + "' ORDER BY DateEarnedHardcore DESC LIMIT 1").fetchone()]
     userlastsa = [aa for aa in c.execute("SELECT DateEarned from userachievements WHERE UserID = '" + str(userid) + "' ORDER BY DateEarned DESC LIMIT 1").fetchone()]
     userlasta = max(userlastha[0], userlastsa[0])
-    RAUserRecentAchievements = RARequest("GetUserRecentAchievements", u = str(username), m = "30")
+    RAUserRecentAchievements = RARequest.get("GetUserRecentAchievements", u = str(username), m = "30")
     for item in RAUserRecentAchievements:
         date = int(time.mktime(datetime.datetime.strptime(item["Date"], "%Y-%m-%d %H:%M:%S").timetuple()))
         if date > userlasta:
@@ -220,7 +173,7 @@ def update_user(username):
         for game in updategames:
             if game not in games:
                 add_new_game(int(game))
-            RAProgress = RARequest("GetGameInfoAndUserProgress", u = str(username), g = str(game), a = "1")
+            RAProgress = RARequest.get("GetGameInfoAndUserProgress", u = str(username), g = str(game), a = "1")
             if any(lst[0] == game for lst in usergames) == False:
                 c.execute("INSERT INTO usergames VALUES (?, ?, ?, ?, ?, ?, ?);",
                    [int(userid), 
@@ -246,7 +199,7 @@ def update_user(username):
         for game in usergames:
             if "mastered" in str(game[1]):
                 mastered_games += 1
-        RAUserProfile = RARequest("GetUserProfile", u = str(username))
+        RAUserProfile = RARequest.get("GetUserProfile", u = str(username))
         # ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, 
         # ContribYield INTEGER, TotalPoints INTEGER, TotalSoftcorePoints INTEGER, TotalTruePoints INTEGER, Games INTEGER, GamesMastered INTEGER, Achievements INTEGER,
         # Permissions INTEGER, Untracked INTEGER, UserWallActive INTEGER, Motto TEXT
@@ -277,7 +230,7 @@ def update_user(username):
 
 def get_user_wants_to_play(username):
     print("Fetching want to play list for " + str(username))
-    RAUserWantToPlayList = RARequest("GetUserWantToPlayList", u = str(username))
+    RAUserWantToPlayList = RARequest.get("GetUserWantToPlayList", u = str(username))
     #UserID INTEGER, GameID INTEGER, GameTitle TEXT, ConsoleID INTEGER, ImageIcon TEXT
     if "Results" in RAUserWantToPlayList:
         c = conn.cursor()
@@ -300,7 +253,7 @@ def get_user_wants_to_play(username):
 
 def get_user_set_requests(username):
     print("Fetching set requests for " + str(username))
-    RAUserSetRequests = RARequest("GetUserSetRequests", u = str(username))
+    RAUserSetRequests = RARequest.get("GetUserSetRequests", u = str(username))
     #UserID INTEGER, GameID INTEGER, GameTitle TEXT, ConsoleID INTEGER, ImageIcon TEXT
     # I dont know if it acts the same way as want to play response, so being cautious here
     if "RequestedSets" in RAUserSetRequests:
@@ -328,11 +281,11 @@ def get_user_leaderboards(username, gamelist = {}):
     user = c.execute("SELECT ID, LastUpdate from users WHERE User = '" + str(username) + "'").fetchone()
     userid = user[0]
     if gamelist == {}:
-        RARecentlyPlayed = RARequest("GetUserRecentlyPlayedGames", u = str(username), c = "5")
+        RARecentlyPlayed = RARequest.get("GetUserRecentlyPlayedGames", u = str(username), c = "5")
         for item in RARecentlyPlayed:
             gamelist[item["GameID"]] = int(time.mktime(datetime.datetime.strptime(item["LastPlayed"], "%Y-%m-%d %H:%M:%S").timetuple()))
     for item in gamelist:
-        RAUserGameLeaderboards = RARequest("GetUserGameLeaderboards", u = username, i = str(item))
+        RAUserGameLeaderboards = RARequest.get("GetUserGameLeaderboards", u = username, i = str(item))
         #UserID INTEGER, GameID INTEGER, EntryID INTEGER, Score INTEGER, FormattedScore TEXT, Rank INTEGER, DateUpdated INTEGER
         if "Results" in RAUserGameLeaderboards:
             for entry in RAUserGameLeaderboards["Results"]:
@@ -390,9 +343,6 @@ def update():
     conn.commit()
     print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ": update users finished")
 
-global requests
-requests = requests_ratelimiter.LimiterSession(per_second=1)
-requests.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
 requests_free = requests_ratelimiter.LimiterSession(per_second=500)
 requests_free.headers.update({"User-Agent": "rawf/dev-2025.01.15 ( tepiloxtl@tepiloxtl.net )"})
 
@@ -421,6 +371,7 @@ if os.path.isfile(config["RAWF_DBFILE"]) == False:
     conn.close()
 
 conn = sqlite3.connect(config["RAWF_DBFILE"])
+RARequest = RARequest(str(config["RA_APIKEY"]))
 
 for path in [os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'Badge'), os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'Images'), os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'UserPic')]:
     if os.path.exists(path) == False:
