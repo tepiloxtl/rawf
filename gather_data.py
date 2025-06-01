@@ -352,6 +352,8 @@ if "RAWF_INTERVAL" not in config:
 if "RAWF_DBFILE" not in config:
     config["RAWF_DBFILE"] = "RA.db"
 
+RARequest = RARequest(str(config["RA_APIKEY"]))
+
 if os.path.isfile(config["RAWF_DBFILE"]) == False:
     print("Database not found, creating new database at " + str(config["RAWF_DBFILE"]))
     conn = sqlite3.connect("RA.db")
@@ -371,7 +373,6 @@ if os.path.isfile(config["RAWF_DBFILE"]) == False:
     conn.close()
 
 conn = sqlite3.connect(config["RAWF_DBFILE"])
-RARequest = RARequest(str(config["RA_APIKEY"]))
 
 for path in [os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'Badge'), os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'Images'), os.path.join(os.getcwd(), 'webapp', 'static', 'img', 'UserPic')]:
     if os.path.exists(path) == False:
