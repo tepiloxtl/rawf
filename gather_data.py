@@ -17,11 +17,12 @@ def add_new_user(username):
         if "HighestAwardKind" in game and "mastered" in str(game["HighestAwardKind"]):
             mastered_games += 1
         #UserID INTEGER, GameID INTEGER, NumAwarded INTEGER, NumAwardedHardcore INTEGER, MostRecentAwardedDate INTEGER, HighestAwardKind TEXT, HighestAwardDate INTEGER
-        c.execute("INSERT INTO usergames VALUES (?, ?, ?, ?, ?, ?, ?);",
+        c.execute("INSERT INTO usergames VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
                    [int(RAUserProfile["ID"]), 
                     int(game["GameID"]), 
                     int(game["NumAwarded"]), 
-                    int(game["NumAwardedHardcore"]), 
+                    int(game["NumAwardedHardcore"]),
+                    0, 
                     int(time.mktime(datetime.datetime.strptime(game["MostRecentAwardedDate"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple()) if game["MostRecentAwardedDate"] != None else 0), 
                     str(game["HighestAwardKind"]), 
                     int(time.mktime(datetime.datetime.strptime(game["HighestAwardDate"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple()) if game["HighestAwardDate"] != None else 0)])
@@ -36,6 +37,11 @@ def add_new_user(username):
                            achievement["ID"],
                            int(time.mktime(datetime.datetime.strptime(achievement["DateEarnedHardcore"], "%Y-%m-%d %H:%M:%S").timetuple()) if "DateEarnedHardcore" in achievement else 0),
                            int(time.mktime(datetime.datetime.strptime(achievement["DateEarned"], "%Y-%m-%d %H:%M:%S").timetuple()) if "DateEarned" in achievement else 0)])
+                if "DateEarnedHardcore" in achievement and achievement["type"] == "win_condition":
+                    c.execute("UPDATE usergames SET BeatenDate = ? WHERE UserID = ? AND GameID = ?;",
+                              [int(time.mktime(datetime.datetime.strptime(achievement["DateEarnedHardcore"], "%Y-%m-%d %H:%M:%S").timetuple()) if "DateEarnedHardcore" in achievement else 0),
+                               int(RAUserProfile["ID"]),
+                               int(game["GameID"])])
         gameids[game["GameID"]] = int(time.time())
     get_image(str(RAUserProfile["UserPic"]).split("/")[1], str(RAUserProfile["UserPic"]).split("/")[2])
     # ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, 
@@ -144,7 +150,7 @@ def update_user(username):
         if date > userlasta:
             print("Adding new achievement " + str(item["Title"]) + " from " + str(item["GameTitle"]))
             if int(item["GameID"]) not in updategames:
-                updategames[int(item["GameID"])] = int(date)
+                updategames[int(item["GameID"])] = [int(date), 0]
             record = c.execute("SELECT * FROM userachievements WHERE UserID = ? AND GameID = ? AND AchievementID = ?;", [int(userid), int(item["GameID"]), int(item["AchievementID"])]).fetchall()
             if record:
                 if item["HardcoreMode"] == 0:
@@ -166,6 +172,7 @@ def update_user(username):
                            int(item["AchievementID"]),
                            int(date),
                            int(date)])
+                    updategames[int(item["GameID"])][1] = int(date)
     if updategames or int(time.time()) - userlastupdate > 24 * 60 * 60:
         print("Updating profile for " + str(username))
         games = [aa[0] for aa in c.execute("SELECT ID FROM games;").fetchall()]
@@ -175,12 +182,13 @@ def update_user(username):
                 add_new_game(int(game))
             RAProgress = RARequest.get("GetGameInfoAndUserProgress", u = str(username), g = str(game), a = "1")
             if any(lst[0] == game for lst in usergames) == False:
-                c.execute("INSERT INTO usergames VALUES (?, ?, ?, ?, ?, ?, ?);",
+                c.execute("INSERT INTO usergames VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
                    [int(userid), 
                     int(game), 
                     int(RAProgress["NumAwardedToUser"]), 
                     int(RAProgress["NumAwardedToUserHardcore"]), 
-                    int(updategames[game]), 
+                    int(updategames[game][1]), 
+                    int(updategames[game][0]), 
                     str(RAProgress["HighestAwardKind"]) if "HighestAwardKind" in RAProgress else str("asdf"),
                     int(time.mktime(datetime.datetime.strptime(RAProgress["HighestAwardDate"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple())) if "HighestAwardDate" in RAProgress and RAProgress["HighestAwardDate"] != None else 0])
             else:
@@ -188,11 +196,17 @@ def update_user(username):
                 c.execute("UPDATE usergames SET NumAwarded = ?, NumAwardedHardcore = ?, MostRecentAwardedDate = ?, HighestAwardKind = ?, HighestAwardDate = ? WHERE UserID = ? AND GameID = ?;",
                           [int(RAProgress["NumAwardedToUser"]),
                            int(RAProgress["NumAwardedToUserHardcore"]),
-                           int(updategames[game]),
+                           int(updategames[game][0]),
                            str(RAProgress["HighestAwardKind"]) if "HighestAwardKind" in RAProgress else str("asdf"),
                            int(time.mktime(datetime.datetime.strptime(RAProgress["HighestAwardDate"], "%Y-%m-%dT%H:%M:%S+00:00").timetuple())) if "HighestAwardDate" in RAProgress and RAProgress["HighestAwardDate"] != None else 0,
                            int(userid),
                            int(game)])
+                if updategames[game][1] != 0:
+                    c.execute("UPDATE usergames BeatenDate = ? WHERE UserID = ? AND GameID = ?;",
+                              [int(updategames[game][1]),
+                               int(userid),
+                               int(game)])
+
         mastered_games = 0
         achievement_count = len(c.execute("SELECT AchievementID FROM userachievements WHERE UserID = ?;", [int(userid)]).fetchall())
         usergames = [aa for aa in c.execute("SELECT GameID, HighestAwardKind FROM usergames WHERE UserID = ?;", [int(userid)]).fetchall()]
@@ -361,7 +375,7 @@ if os.path.isfile(config["RAWF_DBFILE"]) == False:
 
     c.execute("CREATE TABLE users (ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, UserPicLastUpdate INTEGER, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, ContribYield INTEGER, TotalPoints INTEGER, TotalSoftcorePoints INTEGER, TotalTruePoints INTEGER, Games INTEGER, GamesMastered INTEGER, Achievements INTEGER, Permissions INTEGER, Untracked INTEGER, UserWallActive INTEGER, Motto TEXT, LastUpdate INTEGER);")
     c.execute("CREATE TABLE games (ID INTEGER PRIMARY KEY NOT NULL, Title TEXT, ConsoleID INTEGER, ConsoleName TEXT, ForumTopicID INTEGER, Flags INTEGER, ImageIcon TEXT, ImageTitle TEXT, ImageIngame TEXT, ImageBoxArt TEXT, Publisher TEXT, Developer TEXT, Genre TEXT, Released TEXT, ReleasedAtGranularity TEXT, GuideURL TEXT, Updated INTEGER, ParentGameID INTEGER, NumAchievements INTEGER);")
-    c.execute("CREATE TABLE usergames (UserID INTEGER, GameID INTEGER, NumAwarded INTEGER, NumAwardedHardcore INTEGER, MostRecentAwardedDate INTEGER, HighestAwardKind TEXT, HighestAwardDate INTEGER)")
+    c.execute("CREATE TABLE usergames (UserID INTEGER, GameID INTEGER, NumAwarded INTEGER, NumAwardedHardcore INTEGER, BeatenDate INTEER, MostRecentAwardedDate INTEGER, HighestAwardKind TEXT, HighestAwardDate INTEGER)")
     c.execute("CREATE TABLE achievements (GameID INTEGER, ID INTEGER, Title TEXT, Description TEXT, Points INTEGER, TrueRatio REAL, Author TEXT, DateModified INTEGER, DateCreated INTEGER, BadgeName INTEGER, DisplayOrder INTEGER, type TEXT);")
     c.execute("CREATE TABLE userachievements (UserID INTEGER, GameID INTEGER, AchievementID INTEGER, DateEarnedHardcore INTEGER, DateEarned INTEGER);")
     c.execute("CREATE TABLE leaderboards (ID INTEGER PRIMARY KEY NOT NULL, GameID INTEGER, Title TEXT, Description TEXT, RankAsc INTEGER, Format TEXT)")
