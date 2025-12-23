@@ -37,7 +37,7 @@ def add_new_user(username):
                            achievement["ID"],
                            int(time.mktime(datetime.datetime.strptime(achievement["DateEarnedHardcore"], "%Y-%m-%d %H:%M:%S").timetuple()) if "DateEarnedHardcore" in achievement else 0),
                            int(time.mktime(datetime.datetime.strptime(achievement["DateEarned"], "%Y-%m-%d %H:%M:%S").timetuple()) if "DateEarned" in achievement else 0)])
-                if "DateEarnedHardcore" in achievement and achievement["type"] == "win_condition":
+                if "DateEarnedHardcore" in achievement and achievement["Type"] == "win_condition":
                     c.execute("UPDATE usergames SET BeatenDate = ? WHERE UserID = ? AND GameID = ?;",
                               [int(time.mktime(datetime.datetime.strptime(achievement["DateEarnedHardcore"], "%Y-%m-%d %H:%M:%S").timetuple()) if "DateEarnedHardcore" in achievement else 0),
                                int(RAUserProfile["ID"]),
@@ -375,7 +375,7 @@ if os.path.isfile(config["RAWF_DBFILE"]) == False:
 
     c.execute("CREATE TABLE users (ID INTEGER PRIMARY KEY NOT NULL, User TEXT, UserPic TEXT, UserPicLastUpdate INTEGER, MemberSince INTEGER, RichPresenceMsg TEXT, LastGameID INTEGER, ContribCount INTEGER, ContribYield INTEGER, TotalPoints INTEGER, TotalSoftcorePoints INTEGER, TotalTruePoints INTEGER, Games INTEGER, GamesMastered INTEGER, Achievements INTEGER, Permissions INTEGER, Untracked INTEGER, UserWallActive INTEGER, Motto TEXT, LastUpdate INTEGER);")
     c.execute("CREATE TABLE games (ID INTEGER PRIMARY KEY NOT NULL, Title TEXT, ConsoleID INTEGER, ConsoleName TEXT, ForumTopicID INTEGER, Flags INTEGER, ImageIcon TEXT, ImageTitle TEXT, ImageIngame TEXT, ImageBoxArt TEXT, Publisher TEXT, Developer TEXT, Genre TEXT, Released TEXT, ReleasedAtGranularity TEXT, GuideURL TEXT, Updated INTEGER, ParentGameID INTEGER, NumAchievements INTEGER);")
-    c.execute("CREATE TABLE usergames (UserID INTEGER, GameID INTEGER, NumAwarded INTEGER, NumAwardedHardcore INTEGER, BeatenDate INTEER, MostRecentAwardedDate INTEGER, HighestAwardKind TEXT, HighestAwardDate INTEGER)")
+    c.execute("CREATE TABLE usergames (UserID INTEGER, GameID INTEGER, NumAwarded INTEGER, NumAwardedHardcore INTEGER, BeatenDate INTEGER, MostRecentAwardedDate INTEGER, HighestAwardKind TEXT, HighestAwardDate INTEGER)")
     c.execute("CREATE TABLE achievements (GameID INTEGER, ID INTEGER, Title TEXT, Description TEXT, Points INTEGER, TrueRatio REAL, Author TEXT, DateModified INTEGER, DateCreated INTEGER, BadgeName INTEGER, DisplayOrder INTEGER, type TEXT);")
     c.execute("CREATE TABLE userachievements (UserID INTEGER, GameID INTEGER, AchievementID INTEGER, DateEarnedHardcore INTEGER, DateEarned INTEGER);")
     c.execute("CREATE TABLE leaderboards (ID INTEGER PRIMARY KEY NOT NULL, GameID INTEGER, Title TEXT, Description TEXT, RankAsc INTEGER, Format TEXT)")
